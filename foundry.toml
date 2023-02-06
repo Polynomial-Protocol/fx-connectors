@@ -3,4 +3,10 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 
-# See more config options https://github.com/foundry-rs/foundry/tree/master/config
+[rpc_endpoints]
+goerli_optimism = "${GOERLI_OPTIMISM_RPC_URL}"
+optimism = "${OPTIMISM_RPC_URL}"
+
+[etherscan]
+goerli_optimism = { key = "${ETHERSCAN_API_KEY}" }
+optimism = { key = "${ETHERSCAN_API_KEY}" }
