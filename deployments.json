@@ -1,0 +1,7 @@
+{
+  "storage": "0x9f4e24e48D1Cd41FA87A481Ae2242372Bd32618C",
+  "connectors": {
+    "Basic-v1": "0x561Fa02773cC4414C104e8C59e97981578A2a299",
+    "Synthetix-Perp-v1": "0x920DF046848ee6729b3F143ac7DFa5a9bc95305a"
+  }
+}
