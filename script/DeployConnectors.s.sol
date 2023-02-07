@@ -16,7 +16,7 @@ contract DeployConnectors is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        IConnectors connectors = IConnectors(0x3fE6Bb6275A00b235E56bA99100022Eba00816A9);
+        IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
         BasicConnector basic = new BasicConnector();
         SynthetixPerpConnector synthetixPerp = new SynthetixPerpConnector();

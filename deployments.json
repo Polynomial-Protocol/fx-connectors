@@ -1,10 +1,10 @@
 {
   "storage": "0x9f4e24e48D1Cd41FA87A481Ae2242372Bd32618C",
   "connectors": {
-    "Basic-v1": "0x561Fa02773cC4414C104e8C59e97981578A2a299",
-    "Synthetix-Perp-v1": "0x920DF046848ee6729b3F143ac7DFa5a9bc95305a"
+    "Basic-v1": "0xb1D38D7AcE1f994a9797e77d1d76BfFf6fa2578e",
+    "Synthetix-Perp-v1": "0xccd718d6D2b410e4a3b1E3402F4e5db681a1f363"
   },
   "resolvers": {
-    "Accounts": "0xd7Ef973de2761E2623F83397533688c5FDc0763A"
+    "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa"
   }
 }
