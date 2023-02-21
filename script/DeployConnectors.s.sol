@@ -9,6 +9,7 @@ import {SynthetixPerpConnector} from "../src/connectors/SynthetixPerp.sol";
 
 interface IConnectors {
     function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
+    function updateConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
 }
 
 contract DeployConnectors is Script {
@@ -18,18 +19,15 @@ contract DeployConnectors is Script {
 
         IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
-        BasicConnector basic = new BasicConnector();
         SynthetixPerpConnector synthetixPerp = new SynthetixPerpConnector();
 
-        string[] memory names = new string[](2);
-        names[0] = basic.name();
-        names[1] = synthetixPerp.name();
+        string[] memory names = new string[](1);
+        names[0] = synthetixPerp.name();
 
-        address[] memory addrs = new address[](2);
-        addrs[0] = address(basic);
-        addrs[1] = address(synthetixPerp);
+        address[] memory addrs = new address[](1);
+        addrs[0] = address(synthetixPerp);
 
-        connectors.addConnectors(names, addrs);
+        connectors.updateConnectors(names, addrs);
 
         vm.stopBroadcast();
     }

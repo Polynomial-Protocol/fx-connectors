@@ -13,6 +13,8 @@ interface IPerpMarket {
 
     function submitOffchainDelayedOrderWithTracking(int256 sizeDelta, uint256 priceImpactDelta, bytes32 trackingCode)
         external;
+
+    function cancelOffchainDelayedOrder(address account) external;
 }
 
 contract SynthetixPerpConnector is BaseConnector {
@@ -72,7 +74,15 @@ contract SynthetixPerpConnector is BaseConnector {
         _eventParam = abi.encode(market, sizeDelta, slippage);
     }
 
+    function cancelOrder(address market) public payable returns (string memory _eventName, bytes memory _eventParam) {
+        IPerpMarket(market).cancelOffchainDelayedOrder(address(this));
+
+        _eventName = "LogCancel(address)";
+        _eventParam = abi.encode(market);
+    }
+
     event LogAddMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogRemoveMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogTrade(address indexed market, int256 sizeDelta, uint256 slippage);
+    event LogCancel(address indexed market);
 }
