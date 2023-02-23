@@ -2,7 +2,9 @@
   "storage": "0x9f4e24e48D1Cd41FA87A481Ae2242372Bd32618C",
   "connectors": {
     "Basic-v1": "0x86ea8030221bf025bb11fadaBb794dAAA7051ae1",
-    "Synthetix-Perp-v1": "0x1Df92B3Ac9AeD27115Ae4127ed098BaEc1BD8b26"
+    "Synthetix-Perp-v1": "0x1Df92B3Ac9AeD27115Ae4127ed098BaEc1BD8b26",
+    "Synthetix-Spot-v1": "0x5630B53033b5343100eF6C44a9fA8722F40A5333",
+    "1inch-v5-v1": "0xcCcBDeCD3214196F497495ec02f7bFEB9DDB3943"
   },
   "resolvers": {
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa"
