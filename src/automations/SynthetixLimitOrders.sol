@@ -28,6 +28,7 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
     /// -----------------------------------------------------------------------
 
     struct LimitOrder {
+        bool isExecuted;
         address user;
         address market;
         bool isUpper;
@@ -84,7 +85,7 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
         require(request.isUpper ? request.triggerPrice > requestPrice : requestPrice > request.triggerPrice);
         require(request.isUpper ? request.limitPrice > request.triggerPrice : request.triggerPrice > request.limitPrice);
 
-        LimitOrder memory order = limitOrders[nextOrderId++];
+        LimitOrder storage order = limitOrders[nextOrderId++];
 
         order.user = msg.sender;
         order.market = market;
@@ -121,12 +122,16 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
         delete limitOrders[orderId];
     }
 
+    /// -----------------------------------------------------------------------
+    /// Keeper Actions
+    /// -----------------------------------------------------------------------
+
     /// @notice Execute a limit order
     /// @param orderId Order id to execute
     /// @param feeReceipient Address of the fee receipient
-    function executeLimitOrder(uint256 orderId, address feeReceipient) external nonReentrant {
-        LimitOrder memory order = limitOrders[orderId];
-        require(block.timestamp <= order.expiry);
+    function executeLimitOrder(uint256 orderId, address feeReceipient) external nonReentrant requiresAuth {
+        LimitOrder storage order = limitOrders[orderId];
+        require(block.timestamp <= order.expiry && !order.isExecuted);
 
         (uint256 currentPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
         require(!invalid);
@@ -163,6 +168,8 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
         IAccount(order.user).cast(targets, datas, address(0x0));
 
         emit ExecuteRequest(order.market, order.user, orderId, currentPrice, msg.sender, feeReceipient, totalFees);
+
+        order.isExecuted = true;
     }
 
     /// -----------------------------------------------------------------------
