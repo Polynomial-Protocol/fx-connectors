@@ -7,6 +7,16 @@ import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
 interface IPerpMarket {
+    struct Position {
+        uint64 id;
+        uint64 lastFundingIndex;
+        uint128 margin;
+        uint128 lastPrice;
+        int128 size;
+    }
+
+    function positions(address account) external view returns (Position memory);
+
     function transferMargin(int256 marginDelta) external;
 
     function withdrawAllMargin() external;
@@ -20,7 +30,7 @@ interface IPerpMarket {
 contract SynthetixPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
 
-    string public constant name = "Synthetix-Perp-v1.1";
+    string public constant name = "Synthetix-Perp-v1.2";
 
     ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
 
@@ -74,6 +84,19 @@ contract SynthetixPerpConnector is BaseConnector {
         _eventParam = abi.encode(market, sizeDelta, slippage);
     }
 
+    function closeTrade(address market, uint256 slippage)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        IPerpMarket.Position memory position = IPerpMarket(market).positions(address(this));
+        int256 sizeDelta = -position.size;
+        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, slippage, "polynomial");
+
+        _eventName = "LogClose(address,int256,uint256)";
+        _eventParam = abi.encode(market, sizeDelta, slippage);
+    }
+
     function long(address market, uint256 longSize, uint256 slippage, uint256 getId, uint256 setId)
         public
         payable
@@ -112,6 +135,7 @@ contract SynthetixPerpConnector is BaseConnector {
     event LogAddMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogRemoveMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogTrade(address indexed market, int256 sizeDelta, uint256 slippage);
+    event LogClose(address indexed market, int256 sizeDelta, uint256 slippage);
     event LogLong(address indexed market, uint256 longSize, uint256 slippage, uint256 getId, uint256 setId);
     event LogShort(address indexed market, uint256 shortSize, uint256 slippage, uint256 getId, uint256 setId);
     event LogCancel(address indexed market);
