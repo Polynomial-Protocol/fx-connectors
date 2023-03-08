@@ -42,7 +42,6 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
 
     struct Request {
         bool isUpper;
-        uint256 requestPrice;
         uint256 triggerPrice;
         uint256 limitPrice;
         int256 sizeDelta;

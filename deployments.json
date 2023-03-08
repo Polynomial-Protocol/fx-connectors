@@ -9,5 +9,8 @@
   },
   "resolvers": {
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa"
+  },
+  "automations": {
+    "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620"
   }
 }
