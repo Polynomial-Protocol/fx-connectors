@@ -40,7 +40,7 @@ contract PowerPerpConnector is BaseConnector {
 
     string public constant name = "Power-Perp-v1";
 
-    ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
+    ERC20 public constant susd = ERC20(0xeBaEAAD9236615542844adC5c149F86C36aD1136);
     ERC20 public immutable liquidityToken;
     ERC20 public immutable powerPerp;
     ERC20 public immutable shortToken;
