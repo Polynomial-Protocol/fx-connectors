@@ -47,10 +47,13 @@ interface IShortToken {
         uint256 collateralAmount;
         address collateral;
     }
+
+    function balanceOf(address owner) external view returns (uint256 balance);
+
     function ownerOf(uint256 tokenId) external view returns (address owner);
     function shortPositions(uint256 positionId) external view returns (ShortPosition memory);
-
 }
+
 contract PowerPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
@@ -158,7 +161,7 @@ contract PowerPerpConnector is BaseConnector {
         if (tradeParams.isLong == true) {
             tradeParams.amount = _amt == type(uint256).max ? powerPerp.balanceOf(address(this)) : _amt;
         } else {
-            tradeParams.amount = _amt == type(uint256).max ? shortToken.(address(this)) : _amt;
+            tradeParams.amount = _amt == type(uint256).max ? shortToken.balanceOf(address(this)) : _amt;
         }
         uint256 totalCost = IExchange(exchange).closeTrade(tradeParams);
         setUint(setId, _amt);
