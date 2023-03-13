@@ -11,6 +11,7 @@
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa"
   },
   "automations": {
-    "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620"
+    "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620",
+    "SynthetixLimitOrders": "0x4395104fC82654ddEaC3ECF01AB40a1814bFb2f4"
   }
 }
