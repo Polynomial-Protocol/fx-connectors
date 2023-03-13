@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+import {console2} from "forge-std/console2.sol";
 
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
@@ -145,7 +146,9 @@ contract PowerPerpConnector is BaseConnector {
             (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
             uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
             uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
-            susd.approve(liquidityPool, fee + usdAmount);
+            uint256 totalCost = (usdAmount + fee) * 13 / 10;
+
+            susd.approve(liquidityPool, totalCost);
         }
         (uint256 positionId, uint256 totalCost) = IExchange(exchange).openTrade(tradeParams);
         _eventName = "LogOpenTrade(TradeParams,uint256,uint256)";
