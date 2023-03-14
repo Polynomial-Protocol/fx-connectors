@@ -6,7 +6,6 @@ import {BaseConnector} from "../utils/BaseConnector.sol";
 interface ILimitOrder {
     struct Request {
         bool isUpper;
-        uint256 requestPrice;
         uint256 triggerPrice;
         uint256 limitPrice;
         int256 sizeDelta;
