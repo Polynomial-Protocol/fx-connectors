@@ -104,7 +104,6 @@ contract SynthetixPerpResolver {
         (fee,) = perpMarket.orderFee(sizeDelta, 2);
 
         (data.margin,) = perpMarket.remainingMargin(account);
-        data.margin -= fee + 2e18;
 
         if (sizeDelta > 0) {
             data.margin += _abs(marginDelta);
@@ -115,6 +114,8 @@ contract SynthetixPerpResolver {
             }
             data.margin -= _abs(marginDelta);
         }
+
+        data.margin -= fee + 2e18;
 
         data.minMargin = _getParam(data.marketKey, "perpsV2MinInitialMargin");
 
