@@ -52,6 +52,7 @@ contract SynthetixPerpResolver {
     using FixedPointMathLib for uint256;
 
     struct Data {
+        bool isMaxMarket;
         bool tooVolatile;
         bytes32 marketKey;
         uint256 currentPrice;
@@ -84,7 +85,14 @@ contract SynthetixPerpResolver {
     function calculate(address market, int256 marginDelta, int256 sizeDelta, address account)
         external
         view
-        returns (uint256 fee, uint256 liquidationPrice, uint256 totalMargin, uint256 accessibleMargin, Status status)
+        returns (
+            uint256 fee,
+            uint256 liquidationPrice,
+            uint256 totalMargin,
+            uint256 accessibleMargin,
+            uint256 assetPrice,
+            Status status
+        )
     {
         IPerpMarket perpMarket = IPerpMarket(market);
         IPerpMarket.Position memory position = perpMarket.positions(account);
@@ -127,9 +135,9 @@ contract SynthetixPerpResolver {
 
         position.size += int128(sizeDelta);
 
-        bool isMaxMarket = _isMaxMarket(perpMarket, oldSize, position.size);
+        data.isMaxMarket = _isMaxMarket(perpMarket, oldSize, position.size);
 
-        if (isMaxMarket) {
+        if (data.isMaxMarket) {
             status = Status.MaxMarketSizeExceeded;
         }
 
@@ -157,6 +165,7 @@ contract SynthetixPerpResolver {
         if (inaccessible < totalMargin) {
             accessibleMargin = totalMargin - inaccessible;
         }
+        assetPrice = data.currentPrice;
     }
 
     function _liquidationMargin(bytes32 marketKey, int256 size, uint256 price) internal view returns (uint256) {
