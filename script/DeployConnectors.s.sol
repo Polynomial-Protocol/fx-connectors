@@ -27,7 +27,7 @@ contract DeployConnectors is Script {
         address[] memory addrs = new address[](1);
         addrs[0] = address(limitOrder);
 
-        connectors.addConnectors(names, addrs);
+        connectors.updateConnectors(names, addrs);
 
         vm.stopBroadcast();
     }

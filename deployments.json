@@ -6,7 +6,7 @@
     "Synthetix-Perp-v1.2": "0x193209391242B585aE0aA6029DDD23f9eF99b779",
     "Synthetix-Spot-v1": "0x5630B53033b5343100eF6C44a9fA8722F40A5333",
     "1inch-v5-v1": "0xcCcBDeCD3214196F497495ec02f7bFEB9DDB3943",
-    "Synthetix-Perp-Limi-Order-v1": "0xED2D957670fed2498093dBCd9f34b6D024b2825b"
+    "Synthetix-Perp-Limi-Order-v1": "0x1c5BCD2839088D995902623E9Ed711080F23464b"
   },
   "resolvers": {
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa",

@@ -49,7 +49,7 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
         _eventParam = abi.encode(market);
     }
 
-    function cancelLimitOrder(uint256 orderId)
+    function cancelLimitOrder(uint256 orderId, bool toDisable)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
@@ -58,14 +58,14 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
 
         bool isAuth = IAccount(address(this)).isAuth(address(limitOrder));
 
-        if (isAuth) {
+        if (isAuth && toDisable) {
             IAccount(address(this)).disable(address(limitOrder));
         }
 
-        _eventName = "LogCancelLimitOrder(uint256)";
-        _eventParam = abi.encode(orderId);
+        _eventName = "LogCancelLimitOrder(uint256,bool)";
+        _eventParam = abi.encode(orderId, toDisable);
     }
 
     event LogSubmitLimitOrder(address indexed market);
-    event LogCancelLimitOrder(uint256 orderId);
+    event LogCancelLimitOrder(uint256 orderId, bool toDisable);
 }
