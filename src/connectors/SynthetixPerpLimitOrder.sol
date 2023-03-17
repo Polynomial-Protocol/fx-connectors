@@ -25,12 +25,9 @@ interface IAccount {
 }
 
 contract SynthetixPerpLimitOrderConnector is BaseConnector {
-    ILimitOrder public immutable limitOrder;
-    string public constant name = "Synthetix-Perp-Limit-Order-v1";
+    ILimitOrder public constant limitOrder = ILimitOrder(0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc);
 
-    constructor(ILimitOrder _limitOrder) {
-        limitOrder = _limitOrder;
-    }
+    string public constant name = "Synthetix-Perp-Limit-Order-v1.1";
 
     function submitLimitOrder(address market, ILimitOrder.Request memory request)
         public

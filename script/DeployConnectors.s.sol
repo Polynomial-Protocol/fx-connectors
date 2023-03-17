@@ -18,8 +18,7 @@ contract DeployConnectors is Script {
 
         IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
-        SynthetixPerpLimitOrderConnector limitOrder =
-            new SynthetixPerpLimitOrderConnector(ILimitOrder(0x4395104fC82654ddEaC3ECF01AB40a1814bFb2f4));
+        SynthetixPerpLimitOrderConnector limitOrder = new SynthetixPerpLimitOrderConnector();
 
         string[] memory names = new string[](1);
         names[0] = limitOrder.name();
@@ -27,7 +26,7 @@ contract DeployConnectors is Script {
         address[] memory addrs = new address[](1);
         addrs[0] = address(limitOrder);
 
-        connectors.updateConnectors(names, addrs);
+        connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }
