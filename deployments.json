@@ -14,6 +14,9 @@
   },
   "automations": {
     "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620",
-    "SynthetixLimitOrders": "0x4395104fC82654ddEaC3ECF01AB40a1814bFb2f4"
+    "SynthetixLimitOrders": {
+      "proxy": "0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc",
+      "implementation": "0x93e7e22524771C4a694260A9E73Be9cffF9d8baA"
+    }
   }
 }

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Auth, Authority} from "solmate/auth/Auth.sol";
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+
+import {Initializable} from "../proxy/utils/Initializable.sol";
+import {AuthUpgradable, Authority} from "../libraries/AuthUpgradable.sol";
+import {ReentrancyGuardUpgradable} from "../libraries/ReentracyUpgradable.sol";
 
 interface IList {
     function accountID(address) external view returns (uint64);
@@ -17,7 +19,7 @@ interface IAccount {
     function cast(string[] calldata _targetNames, bytes[] calldata _datas, address _origin) external;
 }
 
-contract SynthetixLimitOrders is Auth, ReentrancyGuard {
+contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
     /// -----------------------------------------------------------------------
     /// Library usage
     /// -----------------------------------------------------------------------
@@ -60,12 +62,24 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
     uint256 public percentageFee;
 
     /// @notice Next order id
-    uint256 public nextOrderId = 1;
+    uint256 public nextOrderId;
 
     /// @notice Order id to order info mapping
-    mapping(uint256 => LimitOrder) limitOrders;
+    mapping(uint256 => LimitOrder) public limitOrders;
 
-    constructor() Auth(msg.sender, Authority(address(0x0))) {}
+    // constructor() Auth(msg.sender, Authority(address(0x0))) {}
+
+    function initialize(address _owner, uint256 _flatFee, uint256 _percentageFee) public initializer {
+        _auth_init(_owner, Authority(0x19828283852a852f8cFfF4696038Bc19E5070A49));
+        _reentrancy_init();
+
+        emit UpdateFees(flatFee, _flatFee, percentageFee, _percentageFee);
+
+        flatFee = _flatFee;
+        percentageFee = _percentageFee;
+
+        nextOrderId = 1;
+    }
 
     /// -----------------------------------------------------------------------
     /// User Actions
@@ -76,13 +90,19 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
     /// @param request Request details
     function submitLimitOrderRequest(address market, Request memory request) external nonReentrant {
         require(isAllowed());
-        require(request.expiry > block.timestamp);
+        require(request.expiry > block.timestamp, "invalid-expiry");
 
         (uint256 requestPrice, bool invalid) = IPerpMarket(market).assetPrice();
-        require(!invalid);
+        require(!invalid, "invalid-current-price");
 
-        require(request.isUpper ? request.triggerPrice > requestPrice : requestPrice > request.triggerPrice);
-        require(request.isUpper ? request.limitPrice > request.triggerPrice : request.triggerPrice > request.limitPrice);
+        require(
+            request.isUpper ? request.triggerPrice > requestPrice : requestPrice > request.triggerPrice,
+            "invalid-trigger-price"
+        );
+        require(
+            request.isUpper ? request.limitPrice > request.triggerPrice : request.triggerPrice > request.limitPrice,
+            "invalid-limit-price"
+        );
 
         LimitOrder storage order = limitOrders[nextOrderId++];
 
@@ -114,7 +134,7 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
     /// @param orderId Order id to cancel
     function cancelLimitOrderRequest(uint256 orderId) external nonReentrant {
         LimitOrder memory order = limitOrders[orderId];
-        require(msg.sender == order.user);
+        require(msg.sender == order.user, "unauthorized");
 
         emit CancelRequest(order.market, msg.sender, orderId);
 
@@ -130,14 +150,19 @@ contract SynthetixLimitOrders is Auth, ReentrancyGuard {
     /// @param feeReceipient Address of the fee receipient
     function executeLimitOrder(uint256 orderId, address feeReceipient) external nonReentrant requiresAuth {
         LimitOrder storage order = limitOrders[orderId];
-        require(block.timestamp <= order.expiry && !order.isExecuted);
+        require(block.timestamp <= order.expiry && !order.isExecuted, "already-expired-or-already-executed");
 
         (uint256 currentPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
-        require(!invalid);
+        require(!invalid, "invalid-current-price");
 
-        require(order.isUpper ? currentPrice >= order.triggerPrice : currentPrice <= order.triggerPrice);
+        require(
+            order.isUpper ? currentPrice >= order.triggerPrice : currentPrice <= order.triggerPrice,
+            "did-not-satisfy-trigger"
+        );
 
-        require(order.isUpper ? currentPrice < order.limitPrice : order.limitPrice > currentPrice);
+        require(
+            order.isUpper ? currentPrice <= order.limitPrice : order.limitPrice <= currentPrice, "did-not-satisfy-limit"
+        );
 
         uint256 dollarValue = _abs(order.sizeDelta).mulWadDown(currentPrice);
         uint256 totalFees = flatFee + dollarValue.mulWadDown(percentageFee);
