@@ -147,8 +147,11 @@ contract PowerPerpConnector is BaseConnector {
             uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
             uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
             uint256 totalCost = (usdAmount + fee) * 13 / 10;
-
             susd.approve(liquidityPool, totalCost);
+        } else {
+            ERC20(tradeParams.collateral).safeApprove(exchange, tradeParams.collateralAmount);
+            uint256 allowance = ERC20(tradeParams.collateral).allowance(address(this), exchange);
+            console2.log("allowance", allowance);
         }
         (uint256 positionId, uint256 totalCost) = IExchange(exchange).openTrade(tradeParams);
         _eventName = "LogOpenTrade(TradeParams,uint256,uint256)";
