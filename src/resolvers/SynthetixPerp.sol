@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {wadDiv} from "solmate/utils/SignedWadMath.sol";
 
+import {console2} from "forge-std/console2.sol";
+
 interface IAddressResolver {
     function getAddress(bytes32 name) external view returns (address);
 }
@@ -96,6 +98,7 @@ contract SynthetixPerpResolver {
     {
         IPerpMarket perpMarket = IPerpMarket(market);
         IPerpMarket.Position memory position = perpMarket.positions(account);
+        console2.log("yay", position.margin);
         Data memory data;
 
         data.marketKey = perpMarket.marketKey();
@@ -148,11 +151,15 @@ contract SynthetixPerpResolver {
         }
 
         int256 liquidationPremium = int256(_liquidationPremium(data.marketKey, position.size, data.currentPrice));
-        int256 liqPrice = int256(data.currentPrice)
-            + wadDiv(liquidationMargin - int256(data.margin) - liquidationPremium, position.size);
+        int256 liqPrice = position.size == 0
+            ? int256(0)
+            : (
+                int256(data.currentPrice)
+                    + wadDiv(liquidationMargin - int256(data.margin) - liquidationPremium, position.size)
+            );
         liquidationPrice = uint256(_max(0, liqPrice));
 
-        uint256 leverage = _abs(int256(position.size)).mulDivDown(data.currentPrice, data.margin);
+        uint256 leverage = data.margin == 0 ? 0 : _abs(int256(position.size)).mulDivDown(data.currentPrice, data.margin);
         uint256 maxLeverage = _getParam(data.marketKey, "maxLeverage") + 1e16;
 
         if (leverage > maxLeverage) {
@@ -182,6 +189,9 @@ contract SynthetixPerpResolver {
     }
 
     function _liquidationPremium(bytes32 marketKey, int256 size, uint256 price) internal view returns (uint256) {
+        if (size == 0) {
+            return 0;
+        }
         uint256 notionalSize = _abs(size).mulWadDown(price);
         uint256 skewScale = _getParam(marketKey, "skewScale");
         uint256 liquidationPremiumMultiplier = _getParam(marketKey, "liquidationPremiumMultiplier");

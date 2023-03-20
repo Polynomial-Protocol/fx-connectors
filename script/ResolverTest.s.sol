@@ -11,10 +11,13 @@ contract ResolverTest is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        SynthetixPerpResolver resolver = SynthetixPerpResolver(0x80564F8d8E562A753AFCEB7FAD3983747ADfe649);
+        SynthetixPerpResolver resolver = new SynthetixPerpResolver();
 
         (uint256 fee, uint256 liquidationPrice, uint256 totalMargin, uint256 accessibleMargin,,) = resolver.calculate(
-            0x5B6BeB79E959Aac2659bEE60fE0D0885468BF886, 60e18, 6e18, 0x554ed966Ad76076A8C4dAc4f3506B025e8c5bC24
+            0x5B6BeB79E959Aac2659bEE60fE0D0885468BF886,
+            0,
+            -2060513923362160436,
+            0x0359760336188A8189e15e78C0aC2e299DA01Fba
         );
 
         console2.log(fee, liquidationPrice, totalMargin, accessibleMargin);
