@@ -24,6 +24,18 @@ interface IAccount {
     function disable(address user) external;
 }
 
+interface IPerpMarket {
+    struct Position {
+        uint64 id;
+        uint64 lastFundingIndex;
+        uint128 margin;
+        uint128 lastPrice;
+        int128 size;
+    }
+
+    function positions(address account) external view returns (Position memory);
+}
+
 contract SynthetixPerpLimitOrderConnector is BaseConnector {
     ILimitOrder public constant limitOrder = ILimitOrder(0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc);
 
@@ -46,6 +58,26 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
         _eventParam = abi.encode(market);
     }
 
+    function submitCloseLimitOrder(address market, ILimitOrder.Request memory request)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        bool isAuth = IAccount(address(this)).isAuth(address(limitOrder));
+
+        if (!isAuth) {
+            IAccount(address(this)).enable(address(limitOrder));
+        }
+
+        IPerpMarket.Position memory position = IPerpMarket(market).positions(address(this));
+        require(position.size != 0, "no-active-position");
+
+        request.sizeDelta = -position.size;
+
+        _eventName = "LogSubmitCloseLimitOrder(address)";
+        _eventParam = abi.encode(market);
+    }
+
     function cancelLimitOrder(uint256 orderId, bool toDisable)
         public
         payable
@@ -64,5 +96,6 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
     }
 
     event LogSubmitLimitOrder(address indexed market);
+    event LogSubmitCloseLimitOrder(address indexed market);
     event LogCancelLimitOrder(uint256 orderId, bool toDisable);
 }
