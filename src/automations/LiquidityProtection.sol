@@ -54,11 +54,13 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
 
     function _rebalanceMargin(address user) internal {}
 
-    function _closeMarket(address user, address market) internal {
-        string[] memory targetNames = new string[](1);
-        targetNames[0] = "Synthetix-Perp-v1.2";
-        bytes[] memory datas = new bytes[](1);
-        datas[0] = abi.encodeWithSignature("closeTrade(address,uint256)", market, 300);
+    function _closeMarket(address user, address[] memory market, uint256 length) internal {
+        string[] memory targetNames = new string[](length);
+        bytes[] memory datas = new bytes[](length);
+        for (uint256 i = 0; i < length; i++) {
+            targetNames[i] = "Synthetix-Perp-v1.2";
+            datas[i] = abi.encodeWithSignature("closeTrade(address,uint256)", market[i], 300);
+        }
         IAccount(user).cast(targetNames, datas, address(0x0));
     }
 
@@ -78,15 +80,18 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         if (canRebalance) {
             _rebalanceMargin(user);
         }
+        address[] memory markets = new address[](_protection.markets.length);
+        uint256 index = 0;
         for (uint256 i = 0; i < _protection.markets.length; i++) {
             (uint256 assetPrice, bool invalid) = IPerpMarket(_protection.markets[i]).assetPrice();
             (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection.markets[i]).liquidationPrice(msg.sender);
             require(!(invalid || invalid2));
 
             if (isDanger(liquidationPrice, assetPrice, _protection.thresholds[i]) && _protection.actions[i] == false) {
-                _closeMarket(user, _protection.markets[i]);
+                markets[index++] = _protection.markets[i];
             }
         }
+        _closeMarket(user, markets, index);
     }
 
     /// @notice Returns whether an address is a SCW or not
