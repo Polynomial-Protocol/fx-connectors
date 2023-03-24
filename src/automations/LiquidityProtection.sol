@@ -54,7 +54,13 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
 
     function _rebalanceMargin(address user) internal {}
 
-    function _closeMarket(address user, address market) internal {}
+    function _closeMarket(address user, address market) internal {
+        string[] memory targetNames = new string[](1);
+        targetNames[0] = "Synthetix-Perp-v1.2";
+        bytes[] memory datas = new bytes[](1);
+        datas[0] = abi.encodeWithSignature("closeTrade(address,uint256)", market, 300);
+        IAccount(user).cast(targetNames, datas, address(0x0));
+    }
 
     function execute(address user) external nonReentrant requiresAuth {
         bool canRebalance = false;
