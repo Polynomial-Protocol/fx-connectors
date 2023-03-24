@@ -74,6 +74,8 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
 
         request.sizeDelta = -position.size;
 
+        limitOrder.submitLimitOrderRequest(market, request);
+
         _eventName = "LogSubmitCloseLimitOrder(address)";
         _eventParam = abi.encode(market);
     }
