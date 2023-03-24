@@ -13,6 +13,7 @@ interface IList {
 
 interface IPerpMarket {
     function assetPrice() external view returns (uint256 price, bool invalid);
+    function liquidationPrice(address) external view returns (uint256 price, bool invalid);
 }
 
 interface IAccount {
@@ -35,13 +36,18 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         bool action; //0 represents close, 1 represents rebalance
         uint256 threshold;
         bool isProtected;
+        address user;
     }
 
     mapping(address => Protection) public protection;
     mapping(address => bool) public isPresent;
     address[] public markets;
 
-    function updateProtection(address[] memory _markets, Protection[] memory _protections) external nonReentrant {
+    function updateProtection(address[] memory _markets, Protection[] memory _protections)
+        external
+        nonReentrant
+        requiresAuth
+    {
         require(isAllowed());
 
         for (uint256 i = 0; i < markets.length; i++) {
@@ -60,24 +66,24 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
 
     function _closeMarket() internal {}
 
-    function checkLiquidation() external nonReentrant {
+    function execute() external nonReentrant requiresAuth {
         require(isAllowed());
-        uint256 reBalanceCount = 0;
+        bool canRebalance = false;
         for (uint256 i = 0; i < markets.length; i++) {
             (uint256 assetPrice, bool invalid) = IPerpMarket(markets[i]).assetPrice();
-            require(!invalid);
+            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(markets[i]).liquidationPrice(msg.sender);
+            require(!(invalid || invalid2));
+
             Protection memory _protection = protection[markets[i]];
             if (_protection.isProtected) {
-                if (_protection.action == false) {
-                    if (isDanger(_protection.threshold, assetPrice, _protection.threshold)) {
-                        _closeMarket();
-                    }
-                } else {
-                    if (isDanger(_protection.threshold, assetPrice, _protection.threshold)) {
-                        _rebalanceMargin();
-                    }
+                if (isDanger(liquidationPrice, assetPrice, _protection.threshold) && _protection.action) {
+                    canRebalance = true;
+                    break;
                 }
             }
+        }
+        if (canRebalance) {
+            _rebalanceMargin();
         }
     }
 
