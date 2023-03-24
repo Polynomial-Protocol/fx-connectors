@@ -12,6 +12,8 @@ interface IList {
 }
 
 interface IPerpMarket {
+    function remainingMargin(address account) external view returns (uint256 marginRemaining, bool invalid);
+    function notionalValue(address account) external view returns (int256 value, bool invalid);
     function assetPrice() external view returns (uint256 price, bool invalid);
     function liquidationPrice(address) external view returns (uint256 price, bool invalid);
 }
@@ -52,7 +54,45 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         _protection.thresholds = _thresholds;
     }
 
-    function _rebalanceMargin(address user) internal {}
+    function _rebalanceMargin(address user, address[] memory markets) internal {
+        uint256 totalNotionalSize = 0;
+        uint256[] memory notionalValues = new uint256[](markets.length);
+        uint256[] memory margins = new uint256[](markets.length);
+        uint256 totalMargin = 0;
+        for (uint256 i = 0; i < markets.length; i++) {
+            (uint256 marginRemaining, bool invalid) = IPerpMarket(markets[i]).remainingMargin(user);
+            (int256 _notionalValue, bool invalid2) = (IPerpMarket(markets[i]).notionalValue(user));
+            require(!(invalid || invalid2));
+            totalNotionalSize += _abs(_notionalValue);
+
+            notionalValues[i] = _abs(_notionalValue);
+            margins[i] = marginRemaining;
+            totalMargin += marginRemaining;
+        }
+        //@Todo: Add fees deduction from total margin
+
+        uint256 actionsLength = markets.length;
+
+        string[] memory targets = new string[](actionsLength);
+        bytes[] memory datas = new bytes[](actionsLength);
+
+        for (uint256 i = 0; i < markets.length; i++) {
+            uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
+
+            targets[i] = "Synthetix-Perp-v1.2";
+            if (margins[i] >= marginForMarket) {
+                datas[i] = abi.encodeWithSignature(
+                    "removeMargin(address,uint256,uint256,uint256)", markets[i], margins[i] - marginForMarket, 0, 0
+                );
+            } else {
+                datas[i] = abi.encodeWithSignature(
+                    "addMargin(address,uint256,uint256,uint256)", markets[i], marginForMarket - margins[i], 0, 0
+                );
+            }
+        }
+
+        IAccount(user).cast(targets, datas, address(0x0));
+    }
 
     function _closeMarket(address user, address[] memory market, uint256 length) internal {
         string[] memory targetNames = new string[](length);
@@ -78,7 +118,7 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
             }
         }
         if (canRebalance) {
-            _rebalanceMargin(user);
+            _rebalanceMargin(user, _protection.markets);
         }
         address[] memory markets = new address[](_protection.markets.length);
         uint256 index = 0;
