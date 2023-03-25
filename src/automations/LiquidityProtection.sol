@@ -37,21 +37,25 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         address[] markets;
         bool[] actions; //0 represents close, 1 represents rebalance
         uint256[] thresholds;
+        uint256[] priceImpactDeltas;
     }
 
     mapping(address => Protection) protection;
 
-    function updateProtection(address[] memory _markets, bool[] memory _actions, uint256[] memory _thresholds)
-        external
-        nonReentrant
-    {
+    function updateProtection(
+        address[] memory _markets,
+        bool[] memory _actions,
+        uint256[] memory _thresholds,
+        uint256[] memory _priceImpactDeltas
+    ) external nonReentrant {
         require(isAllowed());
         require(_markets.length == _actions.length);
         require(_markets.length == _thresholds.length);
-        Protection memory _protection = protection[msg.sender];
+        Protection storage _protection = protection[msg.sender];
         _protection.markets = _markets;
         _protection.actions = _actions;
         _protection.thresholds = _thresholds;
+        _protection.priceImpactDeltas = _priceImpactDeltas;
     }
 
     function _rebalanceMargin(address user, address[] memory markets) internal {
@@ -76,6 +80,7 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         string[] memory targets = new string[](actionsLength);
         bytes[] memory datas = new bytes[](actionsLength);
 
+        // first remove margin
         for (uint256 i = 0; i < markets.length; i++) {
             uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
 
@@ -84,7 +89,14 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
                 datas[i] = abi.encodeWithSignature(
                     "removeMargin(address,uint256,uint256,uint256)", markets[i], margins[i] - marginForMarket, 0, 0
                 );
-            } else {
+            }
+        }
+        // add margin
+        for (uint256 i = 0; i < markets.length; i++) {
+            uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
+
+            targets[i] = "Synthetix-Perp-v1.2";
+            if (margins[i] <= marginForMarket) {
                 datas[i] = abi.encodeWithSignature(
                     "addMargin(address,uint256,uint256,uint256)", markets[i], marginForMarket - margins[i], 0, 0
                 );
@@ -94,12 +106,14 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         IAccount(user).cast(targets, datas, address(0x0));
     }
 
-    function _closeMarket(address user, address[] memory market, uint256 length) internal {
+    function _closeMarket(address user, address[] memory market, uint256[] memory priceImpactDeltas, uint256 length)
+        internal
+    {
         string[] memory targetNames = new string[](length);
         bytes[] memory datas = new bytes[](length);
         for (uint256 i = 0; i < length; i++) {
             targetNames[i] = "Synthetix-Perp-v1.2";
-            datas[i] = abi.encodeWithSignature("closeTrade(address,uint256)", market[i], 300);
+            datas[i] = abi.encodeWithSignature("closeTrade(address,uint256)", market[i], priceImpactDeltas[i]);
         }
         IAccount(user).cast(targetNames, datas, address(0x0));
     }
@@ -109,7 +123,7 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         Protection memory _protection = protection[user];
         for (uint256 i = 0; i < _protection.markets.length; i++) {
             (uint256 assetPrice, bool invalid) = IPerpMarket(_protection.markets[i]).assetPrice();
-            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection.markets[i]).liquidationPrice(msg.sender);
+            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection.markets[i]).liquidationPrice(user);
             require(!(invalid || invalid2));
 
             if (isDanger(liquidationPrice, assetPrice, _protection.thresholds[i]) && _protection.actions[i]) {
@@ -121,6 +135,7 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
             _rebalanceMargin(user, _protection.markets);
         }
         address[] memory markets = new address[](_protection.markets.length);
+        uint256[] memory priceImpactDelta = new uint256[](_protection.markets.length);
         uint256 index = 0;
         for (uint256 i = 0; i < _protection.markets.length; i++) {
             (uint256 assetPrice, bool invalid) = IPerpMarket(_protection.markets[i]).assetPrice();
@@ -128,10 +143,11 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
             require(!(invalid || invalid2));
 
             if (isDanger(liquidationPrice, assetPrice, _protection.thresholds[i]) && _protection.actions[i] == false) {
-                markets[index++] = _protection.markets[i];
+                markets[index] = _protection.markets[i];
+                priceImpactDelta[index++] = _protection.priceImpactDeltas[i];
             }
         }
-        _closeMarket(user, markets, index);
+        _closeMarket(user, markets, priceImpactDelta, index);
     }
 
     /// @notice Returns whether an address is a SCW or not
