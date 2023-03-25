@@ -4,8 +4,12 @@ pragma solidity ^0.8.9;
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
 interface ILiquidityProtection {
-    function updateProtection(address[] memory _markets, bool[] memory _actions, uint256[] memory _thresholds)
-        external;
+    function updateProtection(
+        address[] memory _markets,
+        bool[] memory _actions,
+        uint256[] memory _thresholds,
+        uint256[] memory _priceImpactDeltas
+    ) external;
 }
 
 interface IAccount {
@@ -19,22 +23,23 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
 
     string public constant name = "Synthetix-Perp-Liquidity-Protection-v1";
 
-    function updateProtection(address[] memory markets, bool[] memory actions, uint256[] memory thresholds)
-        public
-        payable
-        returns (string memory _eventName, bytes memory _eventParam)
-    {
+    function updateProtection(
+        address[] memory markets,
+        bool[] memory actions,
+        uint256[] memory thresholds,
+        uint256[] memory priceImpactDeltas
+    ) public payable returns (string memory _eventName, bytes memory _eventParam) {
         bool isAuth = IAccount(address(this)).isAuth(address(liquidityProtection));
 
         if (!isAuth) {
             IAccount(address(this)).enable(address(liquidityProtection));
         }
 
-        liquidityProtection.updateProtection(markets, actions, thresholds);
+        liquidityProtection.updateProtection(markets, actions, thresholds, priceImpactDeltas);
 
-        _eventName = "LogUpdateProtection(address[], bool[], uint256[])";
-        _eventParam = abi.encode(markets, actions, thresholds);
+        _eventName = "LogUpdateProtection(address[], bool[], uint256[], uint256[])";
+        _eventParam = abi.encode(markets, actions, thresholds, priceImpactDeltas);
     }
 
-    event LogUpdateProtection(address[] markets, bool[] actions, uint256[] thresholds);
+    event LogUpdateProtection(address[] markets, bool[] actions, uint256[] thresholds, uint256[] priceImpactDeltas);
 }

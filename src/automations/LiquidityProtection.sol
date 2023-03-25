@@ -81,12 +81,13 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
         bytes[] memory datas = new bytes[](actionsLength);
 
         // first remove margin
+        uint256 index = 0;
         for (uint256 i = 0; i < markets.length; i++) {
             uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
 
             targets[i] = "Synthetix-Perp-v1.2";
             if (margins[i] >= marginForMarket) {
-                datas[i] = abi.encodeWithSignature(
+                datas[index++] = abi.encodeWithSignature(
                     "removeMargin(address,uint256,uint256,uint256)", markets[i], margins[i] - marginForMarket, 0, 0
                 );
             }
@@ -96,8 +97,8 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
             uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
 
             targets[i] = "Synthetix-Perp-v1.2";
-            if (margins[i] <= marginForMarket) {
-                datas[i] = abi.encodeWithSignature(
+            if (margins[i] < marginForMarket) {
+                datas[index++] = abi.encodeWithSignature(
                     "addMargin(address,uint256,uint256,uint256)", markets[i], marginForMarket - margins[i], 0, 0
                 );
             }
