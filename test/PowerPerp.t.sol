@@ -44,9 +44,9 @@ contract PowerPerpTest is Script, Test {
     address addr = 0x1A540dBb56dA7BDF0AEAC4d36ea759C86a5E9E63;
     address addr2 = 0xC17412b6131A01E128227fE2b2A2220e18338f78;
     ERC20 liquidityToken = ERC20(0x71055Ad10c8B0D5C8d30295CfcE32bE7aA1f1133);
-    ILiquidityPool pool = ILiquidityPool(0xFEe7e4015e12C6450BEb04784fEf916a31CD79CF);
-    IExchange exchange = IExchange(0xbd087DfDcf7739B6A6dd8167239273fB3cDcBf92);
-    ERC20 powerPerp = ERC20(0xF80EeBec5A7BeaBE094fd043d55B28D908c12375);
+    ILiquidityPool pool = ILiquidityPool(0xe61063AA819cF23855Ea5DE3904900c42A5d05FA);
+    IExchange exchange = IExchange(0x1b110A6f51aC11AEf15a0bDF7C5AeBD7459CfB58);
+    ERC20 powerPerp = ERC20(0x346b9325B26A5aAa133Bf70F71A6b5B60C52f8e3);
     address controller = 0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2;
     address index = 0xC7a069dD24178DF00914d49Bf674A40A1420CF01;
     ERC20 susd = ERC20(0xeBaEAAD9236615542844adC5c149F86C36aD1136);
@@ -56,11 +56,11 @@ contract PowerPerpTest is Script, Test {
 
     function getConnector() public returns (PowerPerpConnector) {
         PowerPerpConnector connector = new PowerPerpConnector(
-            0x71055Ad10c8B0D5C8d30295CfcE32bE7aA1f1133,
-            0xF80EeBec5A7BeaBE094fd043d55B28D908c12375,
-            0x7B15b1EbE6D51e241375FF287476D4379889DDb6,
-            0xFEe7e4015e12C6450BEb04784fEf916a31CD79CF,
-            0xbd087DfDcf7739B6A6dd8167239273fB3cDcBf92
+            0xff1d6e32cbe6d15c469728cE19F34Ae23F6B3177,
+            0x346b9325B26A5aAa133Bf70F71A6b5B60C52f8e3,
+            0x480b8fa01BC751C9583c23FAfDC8F5ea7ACA2D0e,
+            0xe61063AA819cF23855Ea5DE3904900c42A5d05FA,
+            0x1b110A6f51aC11AEf15a0bDF7C5AeBD7459CfB58
         );
         return connector;
     }
@@ -114,7 +114,7 @@ contract PowerPerpTest is Script, Test {
         console2.log("tokens: %d", tokens);
         TradeParams memory tradeParams = TradeParams({
             isLong: false,
-            collateral: 0xfDa54191F3C0999dbf4c193dEF1B83EDD3e3Ba39,
+            collateral: address(susd),
             positionId: 0,
             amount: tokens,
             collateralAmount: 2 * ammt,
