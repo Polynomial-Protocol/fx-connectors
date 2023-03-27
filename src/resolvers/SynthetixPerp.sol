@@ -4,8 +4,6 @@ pragma solidity ^0.8.9;
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {wadDiv} from "solmate/utils/SignedWadMath.sol";
 
-import {console2} from "forge-std/console2.sol";
-
 interface IAddressResolver {
     function getAddress(bytes32 name) external view returns (address);
 }
@@ -98,7 +96,6 @@ contract SynthetixPerpResolver {
     {
         IPerpMarket perpMarket = IPerpMarket(market);
         IPerpMarket.Position memory position = perpMarket.positions(account);
-        console2.log("yay", position.margin);
         Data memory data;
 
         data.marketKey = perpMarket.marketKey();
@@ -116,17 +113,21 @@ contract SynthetixPerpResolver {
 
         (data.margin,) = perpMarket.remainingMargin(account);
 
-        if (sizeDelta > 0) {
-            data.margin += _abs(marginDelta);
+        if (data.margin == 0) {
+            status = Status.InsufficientMargin;
         } else {
-            uint256 absMargin = _abs(marginDelta);
-            if (absMargin > data.margin) {
-                status = Status.InsufficientMargin;
+            if (sizeDelta > 0) {
+                data.margin += _abs(marginDelta);
+            } else {
+                uint256 absMargin = _abs(marginDelta);
+                if (absMargin > data.margin) {
+                    status = Status.InsufficientMargin;
+                }
+                data.margin -= _abs(marginDelta);
             }
-            data.margin -= _abs(marginDelta);
-        }
 
-        data.margin -= fee + 2e18;
+            data.margin -= fee + 2e18;
+        }
 
         data.minMargin = _getParam(data.marketKey, "perpsV2MinInitialMargin");
 

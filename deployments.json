@@ -11,7 +11,7 @@
   },
   "resolvers": {
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa",
-    "SynthetixPerp": "0x56027bae94142F1E129e66339B6994F27F174792"
+    "SynthetixPerp": "0x2841a6C22cedFdaaDaB976764044f8531ebAeCEc"
   },
   "automations": {
     "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620",
