@@ -28,44 +28,62 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
     /// -----------------------------------------------------------------------
     using FixedPointMathLib for uint256;
 
-    function initialize(address _owner) public initializer {
+    struct Protection {
+        address market;
+        bool action; //0 represents close, 1 represents rebalance
+        uint256 threshold;
+        uint256 priceImpactDelta;
+    }
+
+    /// -----------------------------------------------------------------------
+    /// State Variables
+    /// -----------------------------------------------------------------------
+
+    /// @notice Flat fee charged per each order, taken from margin upon execution
+    uint256 public flatFee;
+
+    /// @notice Percentage fee charged per each order (or dollar value)
+    uint256 public percentageFee;
+
+    /// @notice Fee receipient
+    address public feeReceipient;
+
+    mapping(address => Protection[]) protections;
+    mapping(address => bool) public allowed;
+
+    function initialize(address _owner, uint256 _flatFee, uint256 _percentageFee) public initializer {
         _auth_init(_owner, Authority(0x19828283852a852f8cFfF4696038Bc19E5070A49));
         _reentrancy_init();
+        flatFee = _flatFee;
+        percentageFee = _percentageFee;
     }
 
-    struct Protection {
-        address[] markets;
-        bool[] actions; //0 represents close, 1 represents rebalance
-        uint256[] thresholds;
-        uint256[] priceImpactDeltas;
+    modifier onlyAllowed(address user) {
+        require(allowed[user], "Not allowed");
+        _;
     }
 
-    mapping(address => Protection) protection;
-
-    function updateProtection(
-        address[] memory _markets,
-        bool[] memory _actions,
-        uint256[] memory _thresholds,
-        uint256[] memory _priceImpactDeltas
-    ) external nonReentrant {
+    function updateProtection(Protection[] memory _protection) external nonReentrant {
         require(isAllowed());
-        require(_markets.length == _actions.length);
-        require(_markets.length == _thresholds.length);
-        Protection storage _protection = protection[msg.sender];
-        _protection.markets = _markets;
-        _protection.actions = _actions;
-        _protection.thresholds = _thresholds;
-        _protection.priceImpactDeltas = _priceImpactDeltas;
+
+        Protection[] storage protection = protections[msg.sender];
+
+        while (protection.length > 0) {
+            protection.pop();
+        }
+        for (uint256 i = 0; i < _protection.length; i++) {
+            protection.push(_protection[i]);
+        }
     }
 
-    function _rebalanceMargin(address user, address[] memory markets) internal {
+    function _rebalanceMargin(address user, Protection[] memory protection) internal {
         uint256 totalNotionalSize = 0;
-        uint256[] memory notionalValues = new uint256[](markets.length);
-        uint256[] memory margins = new uint256[](markets.length);
+        uint256[] memory notionalValues = new uint256[](protection.length);
+        uint256[] memory margins = new uint256[](protection.length);
         uint256 totalMargin = 0;
-        for (uint256 i = 0; i < markets.length; i++) {
-            (uint256 marginRemaining, bool invalid) = IPerpMarket(markets[i]).remainingMargin(user);
-            (int256 _notionalValue, bool invalid2) = (IPerpMarket(markets[i]).notionalValue(user));
+        for (uint256 i = 0; i < protection.length; i++) {
+            (uint256 marginRemaining, bool invalid) = IPerpMarket(protection[i].market).remainingMargin(user);
+            (int256 _notionalValue, bool invalid2) = (IPerpMarket(protection[i].market).notionalValue(user));
             require(!(invalid || invalid2));
             totalNotionalSize += _abs(_notionalValue);
 
@@ -73,83 +91,107 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
             margins[i] = marginRemaining;
             totalMargin += marginRemaining;
         }
-        //@Todo: Add fees deduction from total margin
 
-        uint256 actionsLength = markets.length;
+        uint256 totalFees = flatFee + totalNotionalSize.mulWadDown(percentageFee);
+        totalMargin -= totalFees;
 
-        string[] memory targets = new string[](actionsLength);
-        bytes[] memory datas = new bytes[](actionsLength);
+        uint256 actionsLength = protection.length;
+
+        string[] memory targets = new string[](actionsLength + 1);
+        bytes[] memory datas = new bytes[](actionsLength + 1);
 
         // first remove margin
         uint256 index = 0;
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i = 0; i < protection.length; i++) {
             uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
 
             targets[i] = "Synthetix-Perp-v1.2";
             if (margins[i] >= marginForMarket) {
                 datas[index++] = abi.encodeWithSignature(
-                    "removeMargin(address,uint256,uint256,uint256)", markets[i], margins[i] - marginForMarket, 0, 0
+                    "removeMargin(address,uint256,uint256,uint256)",
+                    protection[i].market,
+                    margins[i] - marginForMarket,
+                    0,
+                    0
                 );
             }
         }
         // add margin
-        for (uint256 i = 0; i < markets.length; i++) {
+        for (uint256 i = 0; i < protection.length; i++) {
             uint256 marginForMarket = notionalValues[i].mulDivDown(totalMargin, totalNotionalSize);
 
             targets[i] = "Synthetix-Perp-v1.2";
             if (margins[i] < marginForMarket) {
                 datas[index++] = abi.encodeWithSignature(
-                    "addMargin(address,uint256,uint256,uint256)", markets[i], marginForMarket - margins[i], 0, 0
+                    "addMargin(address,uint256,uint256,uint256)",
+                    protection[i].market,
+                    marginForMarket - margins[i],
+                    0,
+                    0
                 );
             }
         }
+        targets[index] = "Basic-v1";
+        datas[index] = abi.encodeWithSignature(
+            "withdraw(address,uint256,address,uint256,uint256)",
+            0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9,
+            totalFees,
+            feeReceipient,
+            0,
+            0
+        );
 
         IAccount(user).cast(targets, datas, address(0x0));
     }
 
-    function _closeMarket(address user, address[] memory market, uint256[] memory priceImpactDeltas, uint256 length)
-        internal
-    {
+    function _closeMarket(address user, Protection[] memory markets, uint256 length) internal {
         string[] memory targetNames = new string[](length);
         bytes[] memory datas = new bytes[](length);
         for (uint256 i = 0; i < length; i++) {
             targetNames[i] = "Synthetix-Perp-v1.2";
-            datas[i] = abi.encodeWithSignature("closeTrade(address,uint256)", market[i], priceImpactDeltas[i]);
+            datas[i] =
+                abi.encodeWithSignature("closeTrade(address,uint256)", markets[i].market, markets[i].priceImpactDelta);
         }
         IAccount(user).cast(targetNames, datas, address(0x0));
     }
 
-    function execute(address user) external nonReentrant requiresAuth {
-        bool canRebalance = false;
-        Protection memory _protection = protection[user];
-        for (uint256 i = 0; i < _protection.markets.length; i++) {
-            (uint256 assetPrice, bool invalid) = IPerpMarket(_protection.markets[i]).assetPrice();
-            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection.markets[i]).liquidationPrice(user);
+    // Only closes the markets that are in danger
+    function executeV1(address user) external nonReentrant requiresAuth onlyAllowed(user) {
+        Protection[] memory _protection = protections[user];
+        Protection[] memory marketsToClose = new Protection[](_protection.length);
+        uint256 length = 0;
+        for (uint256 i = 0; i < _protection.length; i++) {
+            (uint256 assetPrice, bool invalid) = IPerpMarket(_protection[i].market).assetPrice();
+            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection[i].market).liquidationPrice(user);
             require(!(invalid || invalid2));
 
-            if (isDanger(liquidationPrice, assetPrice, _protection.thresholds[i]) && _protection.actions[i]) {
+            if (isDanger(liquidationPrice, assetPrice, _protection[i].threshold) && _protection[i].action == false) {
+                marketsToClose[length++] = _protection[i];
+            }
+        }
+        _closeMarket(user, marketsToClose, length);
+    }
+
+    // Check for market rebalance
+    function executeV2(address user) external nonReentrant requiresAuth onlyAllowed(user) {
+        bool canRebalance = false;
+        Protection[] memory _protection = protections[user];
+        for (uint256 i = 0; i < _protection.length; i++) {
+            (uint256 assetPrice, bool invalid) = IPerpMarket(_protection[i].market).assetPrice();
+            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection[i].market).liquidationPrice(user);
+            require(!(invalid || invalid2));
+
+            if (isDanger(liquidationPrice, assetPrice, _protection[i].threshold) && _protection[i].action) {
                 canRebalance = true;
                 break;
             }
         }
         if (canRebalance) {
-            _rebalanceMargin(user, _protection.markets);
+            _rebalanceMargin(user, _protection);
         }
-        address[] memory markets = new address[](_protection.markets.length);
-        uint256[] memory priceImpactDelta = new uint256[](_protection.markets.length);
-        uint256 index = 0;
-        for (uint256 i = 0; i < _protection.markets.length; i++) {
-            (uint256 assetPrice, bool invalid) = IPerpMarket(_protection.markets[i]).assetPrice();
-            (uint256 liquidationPrice, bool invalid2) = IPerpMarket(_protection.markets[i]).liquidationPrice(msg.sender);
-            require(!(invalid || invalid2));
-
-            if (isDanger(liquidationPrice, assetPrice, _protection.thresholds[i]) && _protection.actions[i] == false) {
-                markets[index] = _protection.markets[i];
-                priceImpactDelta[index++] = _protection.priceImpactDeltas[i];
-            }
-        }
-        _closeMarket(user, markets, priceImpactDelta, index);
     }
+
+    function executeV3(address user) external nonReentrant requiresAuth onlyAllowed(user) {}
 
     /// @notice Returns whether an address is a SCW or not
     function isAllowed() internal view returns (bool) {
@@ -170,5 +212,21 @@ contract LiquidityProtection is Initializable, AuthUpgradable, ReentrancyGuardUp
 
     function isDanger(uint256 liqPrice, uint256 curPrice, uint256 threshold) internal pure returns (bool) {
         return _abs(int256(liqPrice) - int256(curPrice)) <= _min(liqPrice, curPrice).mulWadDown(threshold);
+    }
+
+    /// -----------------------------------------------------------------------
+    /// Admin Actions
+    /// -----------------------------------------------------------------------
+
+    function updateFeeReceipient(address _feeReceipeint) external requiresAuth {
+        feeReceipient = _feeReceipeint;
+    }
+
+    /// @notice Update fee
+    /// @param _flatFee New flat fee rate
+    /// @param _percentageFee New percentage fee rate
+    function updateFees(uint256 _flatFee, uint256 _percentageFee) external requiresAuth {
+        flatFee = _flatFee;
+        percentageFee = _percentageFee;
     }
 }
