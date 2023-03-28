@@ -4,6 +4,10 @@ pragma solidity ^0.8.9;
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {wadDiv} from "solmate/utils/SignedWadMath.sol";
 
+interface IERC20 {
+    function balanceOf(address) external view returns (uint256);
+}
+
 interface IAddressResolver {
     function getAddress(bytes32 name) external view returns (address);
 }
@@ -82,6 +86,32 @@ contract SynthetixPerpResolver {
     IFuturesMarketManager private constant marketManager =
         IFuturesMarketManager(0xdb89f3fc45A707Dd49781495f77f8ae69bF5cA6e);
 
+    function balances(address user, address[] memory token, address[] memory market)
+        external
+        view
+        returns (uint256[] memory tokens, uint256[] memory markets)
+    {
+        if (token.length > 0) {
+            tokens = new uint256[](token.length);
+        }
+
+        if (market.length > 0) {
+            markets = new uint256[](market.length);
+        }
+
+        for (uint256 i = 0; i < token.length; i++) {
+            tokens[i] = IERC20(token[i]).balanceOf(user);
+        }
+
+        for (uint256 i = 0; i < market.length; i++) {
+            IPerpMarket.Position memory position = IPerpMarket(market[i]).positions(user);
+
+            if (position.size == 0) {
+                markets[i] = position.margin;
+            }
+        }
+    }
+
     function calculate(address market, int256 marginDelta, int256 sizeDelta, address account)
         external
         view
@@ -113,26 +143,26 @@ contract SynthetixPerpResolver {
 
         (data.margin,) = perpMarket.remainingMargin(account);
 
-        if (data.margin == 0) {
-            status = Status.InsufficientMargin;
-        } else {
-            if (sizeDelta > 0) {
-                data.margin += _abs(marginDelta);
-            } else {
-                uint256 absMargin = _abs(marginDelta);
-                if (absMargin > data.margin) {
-                    status = Status.InsufficientMargin;
-                }
-                data.margin -= _abs(marginDelta);
-            }
-
-            data.margin -= fee + 2e18;
+        if (data.margin == 0 && marginDelta <= 0) {
+            return (0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
         }
+
+        if (marginDelta > 0) {
+            data.margin += _abs(marginDelta);
+        } else {
+            uint256 absMargin = _abs(marginDelta);
+            if (absMargin > data.margin) {
+                return (0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
+            }
+            data.margin -= _abs(marginDelta);
+        }
+
+        data.margin -= fee + 2e18;
 
         data.minMargin = _getParam(data.marketKey, "perpsV2MinInitialMargin");
 
         if (data.margin < data.minMargin) {
-            status = Status.InsufficientMargin;
+            return (0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
         }
 
         int256 oldSize = position.size;
