@@ -12,8 +12,8 @@
   "resolvers": {
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa",
     "SynthetixPerp": {
-      "proxy": "0xfc1CbA42eB6febF27E0D11Def37b6D5D40a88896",
-      "implementation": "0x3e29470D34CD4ECDbFdF78959AF7BD4eB0971d1F"
+      "proxy": "0x50fF859DE6bc8E71aCc1Dd73E5C4d15B46d04E63",
+      "implementation": "0x0cC1EE0750445DefE8b48ec9E52342660d8626a4"
     }
   },
   "automations": {

@@ -86,31 +86,31 @@ contract SynthetixPerpResolver {
     IFuturesMarketManager private constant marketManager =
         IFuturesMarketManager(0xdb89f3fc45A707Dd49781495f77f8ae69bF5cA6e);
 
-    function balances(address user, address[] memory token, address[] memory market)
-        external
-        view
-        returns (uint256[] memory tokens, uint256[] memory markets)
-    {
-        if (token.length > 0) {
-            tokens = new uint256[](token.length);
-        }
+    // function balances(address user, address[] memory token, address[] memory market)
+    //     external
+    //     view
+    //     returns (uint256[] memory tokens, uint256[] memory markets)
+    // {
+    //     if (token.length > 0) {
+    //         tokens = new uint256[](token.length);
+    //     }
 
-        if (market.length > 0) {
-            markets = new uint256[](market.length);
-        }
+    //     if (market.length > 0) {
+    //         markets = new uint256[](market.length);
+    //     }
 
-        for (uint256 i = 0; i < token.length; i++) {
-            tokens[i] = IERC20(token[i]).balanceOf(user);
-        }
+    //     for (uint256 i = 0; i < token.length; i++) {
+    //         tokens[i] = IERC20(token[i]).balanceOf(user);
+    //     }
 
-        for (uint256 i = 0; i < market.length; i++) {
-            IPerpMarket.Position memory position = IPerpMarket(market[i]).positions(user);
+    //     for (uint256 i = 0; i < market.length; i++) {
+    //         IPerpMarket.Position memory position = IPerpMarket(market[i]).positions(user);
 
-            if (position.size == 0) {
-                markets[i] = position.margin;
-            }
-        }
-    }
+    //         if (position.size == 0) {
+    //             markets[i] = position.margin;
+    //         }
+    //     }
+    // }
 
     function calculate(address market, int256 marginDelta, int256 sizeDelta, address account)
         external
@@ -130,12 +130,12 @@ contract SynthetixPerpResolver {
 
         data.marketKey = perpMarket.marketKey();
 
-        IExchanger exchanger = IExchanger(addressResolver.getAddress("Exchanger"));
-        (, data.tooVolatile) = exchanger.dynamicFeeRateForExchange("sUSD", perpMarket.baseAsset());
+        // IExchanger exchanger = IExchanger(addressResolver.getAddress("Exchanger"));
+        // (, data.tooVolatile) = exchanger.dynamicFeeRateForExchange("sUSD", perpMarket.baseAsset());
 
-        if (data.tooVolatile) {
-            status = Status.PriceTooVolatile;
-        }
+        // if (data.tooVolatile) {
+        //     status = Status.PriceTooVolatile;
+        // }
 
         (data.currentPrice,) = perpMarket.assetPrice();
 
