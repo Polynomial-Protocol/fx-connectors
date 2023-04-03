@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
@@ -14,6 +15,8 @@ interface IPerpMarket {
         uint128 lastPrice;
         int128 size;
     }
+
+    function assetPrice() external view returns (uint256 price, bool invalid);
 
     function positions(address account) external view returns (Position memory);
 
@@ -29,10 +32,13 @@ interface IPerpMarket {
 
 contract SynthetixPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
+    using FixedPointMathLib for uint256;
 
-    string public constant name = "Synthetix-Perp-v1.2";
+    string public constant name = "Synthetix-Perp-v1.3";
 
     ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
+
+    uint256 public constant WAD = 1e18;
 
     function addMargin(address market, uint256 amt, uint256 getId, uint256 setId)
         public
@@ -78,7 +84,13 @@ contract SynthetixPerpConnector is BaseConnector {
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
-        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, slippage, "polynomial");
+        (uint256 price, bool invalid) = IPerpMarket(market).assetPrice();
+
+        require(!invalid);
+
+        uint256 desiredPrice = sizeDelta > 0 ? price.mulWadDown(WAD + slippage) : price.mulWadDown(WAD - slippage);
+
+        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "polynomial");
 
         _eventName = "LogTrade(address,int256,uint256)";
         _eventParam = abi.encode(market, sizeDelta, slippage);
@@ -91,7 +103,14 @@ contract SynthetixPerpConnector is BaseConnector {
     {
         IPerpMarket.Position memory position = IPerpMarket(market).positions(address(this));
         int256 sizeDelta = -position.size;
-        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, slippage, "polynomial");
+
+        (uint256 price, bool invalid) = IPerpMarket(market).assetPrice();
+
+        require(!invalid);
+
+        uint256 desiredPrice = sizeDelta > 0 ? price.mulWadDown(WAD + slippage) : price.mulWadDown(WAD - slippage);
+
+        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "polynomial");
 
         _eventName = "LogClose(address,int256,uint256)";
         _eventParam = abi.encode(market, sizeDelta, slippage);
@@ -103,8 +122,14 @@ contract SynthetixPerpConnector is BaseConnector {
         returns (string memory _eventName, bytes memory _eventParam)
     {
         uint256 _longSize = getUint(getId, longSize);
+
+        (uint256 price, bool invalid) = IPerpMarket(market).assetPrice();
+        require(!invalid);
+
+        uint256 desiredPrice = price.mulWadDown(WAD + slippage);
+
         int256 sizeDelta = int256(_longSize);
-        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, slippage, "polynomial");
+        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "polynomial");
         setUint(setId, _longSize);
 
         _eventName = "LogLong(address,uint256,uint256,uint256,uint256)";
@@ -117,8 +142,14 @@ contract SynthetixPerpConnector is BaseConnector {
         returns (string memory _eventName, bytes memory _eventParam)
     {
         uint256 _shortSize = getUint(getId, shortSize);
+
+        (uint256 price, bool invalid) = IPerpMarket(market).assetPrice();
+        require(!invalid);
+
+        uint256 desiredPrice = price.mulWadDown(WAD - slippage);
+
         int256 sizeDelta = -int256(_shortSize);
-        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, slippage, "polynomial");
+        IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "polynomial");
         setUint(setId, _shortSize);
 
         _eventName = "LogShort(address,uint256,uint256,uint256,uint256)";
