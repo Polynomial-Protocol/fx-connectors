@@ -12,7 +12,7 @@ contract DeployLimitOrder is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address admin = vm.addr(deployerPrivateKey);
+        // address admin = vm.addr(deployerPrivateKey);
 
         SynthetixLimitOrders limitOrder = new SynthetixLimitOrders();
         bytes memory data = abi.encodeWithSelector(
@@ -21,7 +21,10 @@ contract DeployLimitOrder is Script {
             2000000000000000000,
             300000000000000
         );
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(limitOrder), admin, data);
+        // TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(limitOrder), admin, data);
+
+        console2.log(address(limitOrder));
+        console2.logBytes(data);
 
         vm.stopBroadcast();
     }
