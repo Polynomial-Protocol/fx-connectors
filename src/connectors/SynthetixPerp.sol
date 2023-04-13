@@ -34,7 +34,7 @@ contract SynthetixPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
-    string public constant name = "Synthetix-Perp-Kwenta-v1";
+    string public constant name = "Synthetix-Perp-Kwenta-v1.1";
 
     ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
 
@@ -92,6 +92,8 @@ contract SynthetixPerpConnector is BaseConnector {
 
         IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "KWENTA");
 
+        emit LogTrade(market, sizeDelta, slippage);
+
         _eventName = "LogTrade(address,int256,uint256)";
         _eventParam = abi.encode(market, sizeDelta, slippage);
     }
@@ -111,6 +113,8 @@ contract SynthetixPerpConnector is BaseConnector {
         uint256 desiredPrice = sizeDelta > 0 ? price.mulWadDown(WAD + slippage) : price.mulWadDown(WAD - slippage);
 
         IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "KWENTA");
+
+        emit LogClose(market, sizeDelta, slippage);
 
         _eventName = "LogClose(address,int256,uint256)";
         _eventParam = abi.encode(market, sizeDelta, slippage);
@@ -132,6 +136,8 @@ contract SynthetixPerpConnector is BaseConnector {
         IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "KWENTA");
         setUint(setId, _longSize);
 
+        emit LogLong(market, _longSize, slippage, getId, setId);
+
         _eventName = "LogLong(address,uint256,uint256,uint256,uint256)";
         _eventParam = abi.encode(market, _longSize, slippage, getId, setId);
     }
@@ -151,6 +157,8 @@ contract SynthetixPerpConnector is BaseConnector {
         int256 sizeDelta = -int256(_shortSize);
         IPerpMarket(market).submitOffchainDelayedOrderWithTracking(sizeDelta, desiredPrice, "KWENTA");
         setUint(setId, _shortSize);
+
+        emit LogShort(market, _shortSize, slippage, getId, setId);
 
         _eventName = "LogShort(address,uint256,uint256,uint256,uint256)";
         _eventParam = abi.encode(market, _shortSize, slippage, getId, setId);
