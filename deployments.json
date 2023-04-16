@@ -25,6 +25,10 @@
       "proxy": "0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc",
       "implementation": "0x93e7e22524771C4a694260A9E73Be9cffF9d8baA",
       "desiredPriceImplementation": "0x1580673B3002DD94104042f4cdEacc56e6FdBcB7"
+    },
+    "SynthetixAdvancedOrders": {
+      "proxy": "0x7634E43aA3f446C8d9D5014d609355F728361075",
+      "implementation": "0x3A1ba86818CabCbE141e117Ed9544F11F6c520E0"
     }
   }
 }

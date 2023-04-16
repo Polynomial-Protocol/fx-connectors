@@ -106,6 +106,9 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     /// @notice Price Delta Cutoff for Pyth Price
     uint256 public pythPriceDeltaCutoff;
 
+    /// @notice Storage gap
+    uint256[50] private _gap;
+
     /// @notice Order id to order info mapping
     mapping(uint256 => FullOrder) private fullOrders;
 
@@ -242,7 +245,17 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     /// Keeper Actions
     /// -----------------------------------------------------------------------
 
-    function executeLimitOrder(uint256 orderId) external nonReentrant requiresAuth {
+    function executeMultiple(uint256[] memory limitOrders, uint256[] memory pairOrders) external requiresAuth {
+        for (uint256 i = 0; i < limitOrders.length; i++) {
+            executeLimitOrder(limitOrders[i]);
+        }
+
+        for (uint256 i = 0; i < pairOrders.length; i++) {
+            executePairOrder(pairOrders[i]);
+        }
+    }
+
+    function executeLimitOrder(uint256 orderId) public nonReentrant requiresAuth {
         FullOrder storage order = fullOrders[orderId];
         require(block.timestamp <= order.expiry, "order-expired");
         require(!order.isStarted, "order-executed");
@@ -283,7 +296,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         emit ExecuteLimitOrder(order.market, order.user, orderId, currentPrice, totalFees);
     }
 
-    function executePairOrder(uint256 orderId) external nonReentrant requiresAuth {
+    function executePairOrder(uint256 orderId) public nonReentrant requiresAuth {
         FullOrder storage order = fullOrders[orderId];
         require(block.timestamp <= order.expiry, "order-expired");
         require(order.isStarted, "limit-order-not-executed-yet");
@@ -442,6 +455,18 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         emit UpdatePythId(market, pythIds[market], id);
 
         pythIds[market] = id;
+    }
+
+    /// @notice Update Pyth Oracle IDs
+    /// @param markets Market addresses
+    /// @param ids Pyth Oracle IDs
+    function updatePythOracleIds(address[] memory markets, bytes32[] memory ids) external requiresAuth {
+        require(markets.length == ids.length);
+        for (uint256 i = 0; i < markets.length; i++) {
+            emit UpdatePythId(markets[i], pythIds[markets[i]], ids[i]);
+
+            pythIds[markets[i]] = ids[i];
+        }
     }
 
     /// @notice Update Pyth Time Cutoff
