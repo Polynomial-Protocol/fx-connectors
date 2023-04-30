@@ -23,7 +23,7 @@
     "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620",
     "SynthetixLimitOrders": {
       "proxy": "0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc",
-      "implementation": "0x93e7e22524771C4a694260A9E73Be9cffF9d8baA",
+      "implementation": "0xb967a4Bf28c769871e5805E99449EbEF5A7a0d8C",
       "desiredPriceImplementation": "0x1580673B3002DD94104042f4cdEacc56e6FdBcB7"
     },
     "SynthetixAdvancedOrders": {
