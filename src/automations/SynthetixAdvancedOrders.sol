@@ -198,6 +198,8 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     function addPairOrder(uint256 id, PairOrderRequest memory request) external nonReentrant {
         FullOrder storage order = fullOrders[id];
         require(msg.sender == order.user);
+        require(!order.isCancelled, "order-already-cancelled");
+        require(!order.isCompleted, "order-already-completed");
         require(request.expiry > block.timestamp, "invalid-expiry");
 
         (uint256 requestPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
@@ -213,6 +215,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         order.firstPairB = request.firstPairB;
         order.secondPairA = request.secondPairA;
         order.secondPairB = request.secondPairB;
+        order.expiry = request.expiry;
 
         emit AddPairOrder(order.market, msg.sender, id, requestPrice, request);
     }
@@ -293,13 +296,13 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         bytes[] memory datas = new bytes[](3);
 
         targets[0] = "Synthetix-Perp-v1.3";
-        datas[0] = abi.encodeWithSignature(
-            "trade(address,int256,uint256)", order.market, order.sizeDelta, order.priceImpactDelta
-        );
+        datas[0] =
+            abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
 
         targets[1] = "Synthetix-Perp-v1.3";
-        datas[1] =
-            abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
+        datas[1] = abi.encodeWithSignature(
+            "trade(address,int256,uint256)", order.market, order.sizeDelta, order.priceImpactDelta
+        );
 
         targets[2] = "Basic-v1";
         datas[2] = abi.encodeWithSignature(
@@ -355,13 +358,13 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         bytes[] memory datas = new bytes[](3);
 
         targets[0] = "Synthetix-Perp-v1.3";
-        datas[0] = abi.encodeWithSignature(
-            "trade(address,int256,uint256)", order.market, -order.sizeDelta, order.priceImpactDelta
-        );
+        datas[0] =
+            abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
 
         targets[1] = "Synthetix-Perp-v1.3";
-        datas[1] =
-            abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
+        datas[1] = abi.encodeWithSignature(
+            "trade(address,int256,uint256)", order.market, -order.sizeDelta, order.priceImpactDelta
+        );
 
         targets[2] = "Basic-v1";
         datas[2] = abi.encodeWithSignature(
