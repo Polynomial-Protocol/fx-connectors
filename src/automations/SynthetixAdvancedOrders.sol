@@ -195,6 +195,28 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         emit SubmitPairOrder(market, msg.sender, nextFullOrderId - 1, requestPrice, request);
     }
 
+    function addPairOrder(uint256 id, PairOrderRequest memory request) external nonReentrant {
+        FullOrder storage order = fullOrders[id];
+        require(msg.sender == order.user);
+        require(request.expiry > block.timestamp, "invalid-expiry");
+
+        (uint256 requestPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
+        require(!invalid && requestPrice != 0, "invalid-current-price");
+
+        require(request.firstPairA != 0 && request.firstPairA != 0, "range-is-zero");
+        require(request.firstPairB > request.firstPairA, "invalid-range");
+        require(
+            request.firstPairA > requestPrice || request.firstPairB < requestPrice, "invalid-range-for-current-price"
+        );
+
+        order.firstPairA = request.firstPairA;
+        order.firstPairB = request.firstPairB;
+        order.secondPairA = request.secondPairA;
+        order.secondPairB = request.secondPairB;
+
+        emit AddPairOrder(order.market, msg.sender, id, requestPrice, request);
+    }
+
     function cancelFullOrder(uint256 orderId) external nonReentrant {
         FullOrder storage order = fullOrders[orderId];
         require(msg.sender == order.user, "unauthorized");
@@ -532,6 +554,16 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     /// @param requestPrice Price of the asset at the time of request
     /// @param request Request Params
     event SubmitPairOrder(
+        address indexed market, address indexed user, uint256 orderId, uint256 requestPrice, PairOrderRequest request
+    );
+
+    /// @notice Emitted when an pair order is added to an existing full order
+    /// @param market Address of the perp market
+    /// @param user Address of the user
+    /// @param orderId Order ID
+    /// @param requestPrice Price of the asset at the time of request
+    /// @param request Request Params
+    event AddPairOrder(
         address indexed market, address indexed user, uint256 orderId, uint256 requestPrice, PairOrderRequest request
     );
 
