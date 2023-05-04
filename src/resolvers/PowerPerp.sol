@@ -5,6 +5,7 @@ import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {wadDiv} from "solmate/utils/SignedWadMath.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
+
 struct ShortPosition {
     uint256 positionId;
     uint256 shortAmount;
@@ -47,6 +48,7 @@ interface ISystemManager {
     function synthetixAdapter() external view returns (ISynthetixAdapter);
 
     function powerPerp() external view returns (ERC20);
+
 }
 
 interface ISynthetixAdapter {
@@ -64,6 +66,7 @@ contract PowerPerpResolver {
     ISynthetixAdapter synthetixAdapter;
     ERC20 powerPerp;
 
+
     constructor(address _sysManager) {
         ISystemManager sysManager = ISystemManager(_sysManager);
         liquidityPool = sysManager.pool();
@@ -71,6 +74,7 @@ contract PowerPerpResolver {
         shortToken = sysManager.shortToken();
         synthetixAdapter = sysManager.synthetixAdapter();
         powerPerp = sysManager.powerPerp();
+
     }
 
     function getOrderDetails(int256 amt)
