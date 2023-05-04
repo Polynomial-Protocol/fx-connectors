@@ -17,7 +17,7 @@ struct MatchData {
 contract MatchaConnector is BaseConnector {
     using SafeTransferLib for ERC20;
 
-    string public constant name = "matcha-v1";
+    string public constant name = "Matcha-v1";
     address internal constant matchaAddr =
         0xDEF1ABE32c034e558Cdd535791643C58a13aCC10;
 
