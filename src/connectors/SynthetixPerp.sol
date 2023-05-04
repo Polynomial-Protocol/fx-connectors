@@ -30,13 +30,15 @@ interface IPerpMarket {
     function cancelOffchainDelayedOrder(address account) external;
 
     function submitCloseOffchainDelayedOrderWithTracking(uint256 desiredFillPrice, bytes32 trackingCode) external;
+
+    function executeOffchainDelayedOrder(address account, bytes[] calldata priceUpdateData) external payable;
 }
 
 contract SynthetixPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
-    string public constant name = "Synthetix-Perp-v1.3";
+    string public constant name = "Synthetix-Perp-v1.4";
 
     ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
 
@@ -173,6 +175,17 @@ contract SynthetixPerpConnector is BaseConnector {
         _eventParam = abi.encode(market);
     }
 
+    function execute(address market, bytes[] calldata priceUpdateData)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        IPerpMarket(market).executeOffchainDelayedOrder{value: msg.value}(address(this), priceUpdateData);
+
+        _eventName = "LogExecute(address)";
+        _eventParam = abi.encode(market);
+    }
+
     event LogAddMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogRemoveMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogTrade(address indexed market, int256 sizeDelta, uint256 slippage);
@@ -180,4 +193,5 @@ contract SynthetixPerpConnector is BaseConnector {
     event LogLong(address indexed market, uint256 longSize, uint256 slippage, uint256 getId, uint256 setId);
     event LogShort(address indexed market, uint256 shortSize, uint256 slippage, uint256 getId, uint256 setId);
     event LogCancel(address indexed market);
+    event LogExecute(address indexed market);
 }
