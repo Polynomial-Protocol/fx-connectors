@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {wadDiv} from "solmate/utils/SignedWadMath.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
 
 struct ShortPosition {
     uint256 positionId;
@@ -33,6 +34,7 @@ interface IShortCollateral {
 
 interface IShortToken {
     function shortPositions(uint256 positionId) external view returns (ShortPosition memory);
+    function totalSupply() external view returns (uint256);
 }
 
 interface ISystemManager {
@@ -43,6 +45,8 @@ interface ISystemManager {
     function shortToken() external view returns (IShortToken);
 
     function synthetixAdapter() external view returns (ISynthetixAdapter);
+
+    function powerPerp() external view returns (ERC20);
 }
 
 interface ISynthetixAdapter {
@@ -58,6 +62,7 @@ contract PowerPerpResolver {
     IShortCollateral shortCollateral;
     IShortToken shortToken;
     ISynthetixAdapter synthetixAdapter;
+    ERC20 powerPerp;
 
     constructor(address _sysManager) {
         ISystemManager sysManager = ISystemManager(_sysManager);
@@ -65,6 +70,7 @@ contract PowerPerpResolver {
         shortCollateral = sysManager.shortCollateral();
         shortToken = sysManager.shortToken();
         synthetixAdapter = sysManager.synthetixAdapter();
+        powerPerp = sysManager.powerPerp();
     }
 
     function getOrderDetails(int256 amt)
@@ -91,6 +97,12 @@ contract PowerPerpResolver {
         uint256 liquidationPrice = collateralValue.divWadUp(position.shortAmount);
 
         return liquidationPrice;
+    }
+
+    function getOpenInterest() public view returns (uint256) {
+        uint256 totalLongSupply = powerPerp.totalSupply();
+        uint256 totalShortSupply = shortToken.totalSupply();
+        return (totalLongSupply + totalShortSupply).mulWadDown(liquidityPool.getMarkPrice());
     }
 
     function _signedAbs(int256 x) internal pure returns (int256) {
