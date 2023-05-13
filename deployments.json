@@ -19,7 +19,7 @@
     "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa",
     "SynthetixPerp": {
       "proxy": "0x50fF859DE6bc8E71aCc1Dd73E5C4d15B46d04E63",
-      "implementation": "0x0cC1EE0750445DefE8b48ec9E52342660d8626a4"
+      "implementation": "0xaC9735138c4518E8b762a7ee3D98B60141aB0578"
     }
   },
   "automations": {

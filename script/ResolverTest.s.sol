@@ -13,7 +13,7 @@ contract ResolverTest is Script {
 
         SynthetixPerpResolver resolver = new SynthetixPerpResolver();
 
-        (uint256 fee, uint256 liquidationPrice, uint256 totalMargin, uint256 accessibleMargin,,) = resolver.calculate(
+        (, uint256 fee, uint256 liquidationPrice, uint256 totalMargin, uint256 accessibleMargin,,) = resolver.calculate(
             0x5B6BeB79E959Aac2659bEE60fE0D0885468BF886,
             0,
             -2060513923362160436,

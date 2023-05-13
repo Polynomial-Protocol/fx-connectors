@@ -27,6 +27,10 @@ interface IFuturesMarketManager {
     function marketForKey(bytes32 marketKey) external view returns (address);
 }
 
+interface IDynamicKeeperFeeModule {
+    function getMinKeeperFee() external view returns (uint256);
+}
+
 interface IPerpMarket {
     struct Position {
         uint64 id;
@@ -86,6 +90,9 @@ contract SynthetixPerpResolver {
     IFuturesMarketManager private constant marketManager =
         IFuturesMarketManager(0xdb89f3fc45A707Dd49781495f77f8ae69bF5cA6e);
 
+    IDynamicKeeperFeeModule private constant dynamicKeeperFee =
+        IDynamicKeeperFeeModule(0xF4bc5588aAB8CBB412baDd3674094ECF808286f6);
+
     // function balances(address user, address[] memory token, address[] memory market)
     //     external
     //     view
@@ -116,6 +123,7 @@ contract SynthetixPerpResolver {
         external
         view
         returns (
+            uint256 minKeeperFee,
             uint256 fee,
             uint256 liquidationPrice,
             uint256 totalMargin,
@@ -124,18 +132,12 @@ contract SynthetixPerpResolver {
             Status status
         )
     {
+        minKeeperFee = dynamicKeeperFee.getMinKeeperFee();
         IPerpMarket perpMarket = IPerpMarket(market);
         IPerpMarket.Position memory position = perpMarket.positions(account);
         Data memory data;
 
         data.marketKey = perpMarket.marketKey();
-
-        // IExchanger exchanger = IExchanger(addressResolver.getAddress("Exchanger"));
-        // (, data.tooVolatile) = exchanger.dynamicFeeRateForExchange("sUSD", perpMarket.baseAsset());
-
-        // if (data.tooVolatile) {
-        //     status = Status.PriceTooVolatile;
-        // }
 
         (data.currentPrice,) = perpMarket.assetPrice();
 
@@ -144,7 +146,7 @@ contract SynthetixPerpResolver {
         (data.margin,) = perpMarket.remainingMargin(account);
 
         if (data.margin == 0 && marginDelta <= 0) {
-            return (0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
+            return (minKeeperFee, 0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
         }
 
         if (marginDelta > 0) {
@@ -152,7 +154,7 @@ contract SynthetixPerpResolver {
         } else {
             uint256 absMargin = _abs(marginDelta);
             if (absMargin > data.margin) {
-                return (0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
+                return (minKeeperFee, 0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
             }
             data.margin -= _abs(marginDelta);
         }
@@ -162,7 +164,7 @@ contract SynthetixPerpResolver {
         data.minMargin = _getParam(data.marketKey, "perpsV2MinInitialMargin");
 
         if (data.margin < data.minMargin) {
-            return (0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
+            return (minKeeperFee, 0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
         }
 
         int256 oldSize = position.size;

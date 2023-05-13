@@ -12,10 +12,10 @@ contract DeployProxyResolver is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        address admin = vm.addr(deployerPrivateKey);
+        // address admin = vm.addr(deployerPrivateKey);
 
         SynthetixPerpResolver resolver = new SynthetixPerpResolver();
-        new TransparentUpgradeableProxy(address(resolver), admin, "");
+        // new TransparentUpgradeableProxy(address(resolver), admin, "");
 
         vm.stopBroadcast();
     }
