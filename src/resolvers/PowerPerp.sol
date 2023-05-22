@@ -22,9 +22,9 @@ struct Collateral {
 }
 
 interface ILiquidityPool {
-    function getSlippageFee(uint256) external view returns (uint256);
+    function getSlippageFee(int256) external view returns (uint256);
     function baseTradingFee() external view returns (uint256);
-    function getMarkPrice() external view returns (uint256);
+    function getMarkPrice() external view returns (uint256, bool);
     function orderFee(int256) external view returns (uint256);
 }
 
@@ -34,7 +34,7 @@ interface IShortCollateral {
 
 interface IShortToken {
     function shortPositions(uint256 positionId) external view returns (ShortPosition memory);
-    function totalSupply() external view returns (uint256);
+    function totalShorts() external view returns (uint256);
 }
 
 interface ISystemManager {
@@ -76,13 +76,19 @@ contract PowerPerpResolver {
     function getOrderDetails(int256 amt)
         public
         view
-        returns (uint256 fees, uint256 hedgingfees, uint256 tradeFees, uint256 slippageFees)
+        returns (uint256 totalCost, uint256 hedgingfees, uint256 tradeFees, uint256 slippageFees)
     {
-        fees = liquidityPool.orderFee(amt);
-        uint256 valueExchanged = liquidityPool.getMarkPrice().mulWadDown(_abs(amt));
-        tradeFees = liquidityPool.getSlippageFee(_abs(amt)).mulWadDown(valueExchanged);
+        uint256 fees = liquidityPool.orderFee(amt);
+        (uint256 markPrice,) = liquidityPool.getMarkPrice();
+        uint256 valueExchanged = markPrice.mulWadDown(_abs(amt));
+        tradeFees = liquidityPool.getSlippageFee(amt).mulWadDown(valueExchanged);
         hedgingfees = fees - tradeFees;
         slippageFees = tradeFees - liquidityPool.baseTradingFee();
+        if (amt < 0) {
+            totalCost = valueExchanged - fees;
+        } else {
+            totalCost = valueExchanged + fees;
+        }
     }
 
     function getLiquidationPrice(uint256 positionId) public view returns (uint256) {
@@ -99,10 +105,26 @@ contract PowerPerpResolver {
         return liquidationPrice;
     }
 
+    function getLiquidationPriceFromParams(uint256 shortAmount, address collateral, uint256 collateralAmount)
+        public
+        view
+        returns (uint256)
+    {
+        bytes32 collateralKey = synthetixAdapter.getCurrencyKey(collateral);
+        Collateral memory _collateral = shortCollateral.collaterals(collateralKey);
+        (uint256 collateralPrice,) = synthetixAdapter.getAssetPrice(collateralKey);
+        // p * s < c * r * amt
+        uint256 collateralValue = collateralPrice.mulWadDown(collateralAmount).mulWadDown(_collateral.liqRatio);
+        uint256 liquidationPrice = collateralValue.divWadUp(shortAmount);
+
+        return liquidationPrice;
+    }
+
     function getOpenInterest() public view returns (uint256) {
         uint256 totalLongSupply = powerPerp.totalSupply();
-        uint256 totalShortSupply = shortToken.totalSupply();
-        return (totalLongSupply + totalShortSupply).mulWadDown(liquidityPool.getMarkPrice());
+        uint256 totalShortSupply = shortToken.totalShorts();
+        (uint256 markPrice,) = liquidityPool.getMarkPrice();
+        return (totalLongSupply + totalShortSupply).mulWadDown(markPrice);
     }
 
     function _signedAbs(int256 x) internal pure returns (int256) {
