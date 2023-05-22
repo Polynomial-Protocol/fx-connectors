@@ -146,8 +146,8 @@ contract PowerPerpConnector is BaseConnector {
             (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
             uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
             uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
-            uint256 totalCost = (usdAmount + fee) * 13 / 10;
-            susd.approve(liquidityPool, totalCost);
+            uint256 tradeCost = (usdAmount + fee) * 13 / 10;
+            susd.approve(liquidityPool, tradeCost);
         } else {
             ERC20(tradeParams.collateral).safeApprove(exchange, tradeParams.collateralAmount);
             uint256 allowance = ERC20(tradeParams.collateral).allowance(address(this), exchange);
@@ -168,6 +168,11 @@ contract PowerPerpConnector is BaseConnector {
             tradeParams.amount = _amt == type(uint256).max ? powerPerp.balanceOf(address(this)) : _amt;
         } else {
             tradeParams.amount = _amt == type(uint256).max ? shortToken.balanceOf(address(this)) : _amt;
+            (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
+            uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
+            uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
+            uint256 tradeCost = (usdAmount + fee) * 13 / 10;
+            susd.approve(liquidityPool, tradeCost);
         }
         uint256 totalCost = IExchange(exchange).closeTrade(tradeParams);
         setUint(setId, _amt);
