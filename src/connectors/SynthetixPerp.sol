@@ -34,6 +34,10 @@ interface IPerpMarket {
     function executeOffchainDelayedOrder(address account, bytes[] calldata priceUpdateData) external payable;
 }
 
+interface IDynamicGasFees {
+    function setMinKeeperFee() external;
+}
+
 contract SynthetixPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
@@ -41,6 +45,8 @@ contract SynthetixPerpConnector is BaseConnector {
     string public constant name = "Synthetix-Perp-v1.4";
 
     ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
+
+    IDynamicGasFees public constant dynamicGas = IDynamicGasFees(0xF4bc5588aAB8CBB412baDd3674094ECF808286f6);
 
     uint256 public constant WAD = 1e18;
 
@@ -186,6 +192,13 @@ contract SynthetixPerpConnector is BaseConnector {
         _eventParam = abi.encode(market);
     }
 
+    function updateKeeperFee() public payable returns (string memory _eventName, bytes memory _eventParam) {
+        dynamicGas.setMinKeeperFee();
+
+        _eventName = "LogUpdateKeeperFee()";
+        _eventParam = "";
+    }
+
     event LogAddMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogRemoveMargin(address indexed market, uint256 amt, uint256 getId, uint256 setId);
     event LogTrade(address indexed market, int256 sizeDelta, uint256 slippage);
@@ -194,4 +207,5 @@ contract SynthetixPerpConnector is BaseConnector {
     event LogShort(address indexed market, uint256 shortSize, uint256 slippage, uint256 getId, uint256 setId);
     event LogCancel(address indexed market);
     event LogExecute(address indexed market);
+    event LogUpdateKeeperFee();
 }
