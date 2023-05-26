@@ -38,6 +38,7 @@
   },
   "optimism-goerli": {
     "resolvers": {
+      "Accounts": "0xc298ea7c997ca3efa192291df17301c0ee52bcce",
       "SynthetixPerp": "0x7cffc8ab44dfee537e0c837c1a5941e10b7f8673"
     },
     "automations": {
