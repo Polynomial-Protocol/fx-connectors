@@ -154,6 +154,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
 
         order.user = msg.sender;
         order.market = market;
+        order.expiry = request.expiry;
         order.requestPrice = requestPrice;
         order.sizeDelta = request.sizeDelta;
         order.priceImpactDelta = request.priceImpactDelta;
@@ -181,8 +182,10 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         );
 
         FullOrder storage order = fullOrders[nextFullOrderId++];
+
         order.user = msg.sender;
         order.market = market;
+        order.expiry = request.expiry;
         order.requestPrice = requestPrice;
         order.isStarted = true;
         order.sizeDelta = -request.sizeDelta;
