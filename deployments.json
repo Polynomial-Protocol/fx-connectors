@@ -50,6 +50,12 @@
         "proxy": "0x9306e8c3fc4eb748422043f72c81fe89bcc77ed7",
         "implementation": "0x1a9a684119a03cab42cbc9ad65406df0413781a1"
       }
+    },
+    "connectors": {
+      "Basic-v1": "0x210bdf2491dc645fe312abb49835f05a92c93207",
+      "Synthetix-Perp-v1.4": "0x74338D0AA26F2319AA605f1D5AB5e3909D9AbA80",
+      "Synthetix-Spot-v1": "0x2e2752231c54911a5cbf95cb7bDaE1ACFec65EB9",
+      "Synthetix-Perp-Limit-Order-v1.1": "0xa19740D559037Aab838625F1302755d72E330604"
     }
   }
 }
