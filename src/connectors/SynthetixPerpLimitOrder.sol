@@ -13,14 +13,19 @@ interface ILimitOrder {
         uint256 expiry;
     }
 
-    function submitLimitOrderRequest(address market, Request memory request) external;
+    function submitLimitOrderRequest(
+        address market,
+        Request memory request
+    ) external;
 
     function cancelLimitOrderRequest(uint256 orderId) external;
 }
 
 interface IAccount {
     function isAuth(address user) external view returns (bool);
+
     function enable(address user) external;
+
     function disable(address user) external;
 }
 
@@ -37,11 +42,19 @@ interface IPerpMarket {
 }
 
 contract SynthetixPerpLimitOrderConnector is BaseConnector {
-    ILimitOrder public constant limitOrder = ILimitOrder(0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc);
+    // op mainnet
+    // ILimitOrder public constant limitOrder = ILimitOrder(0xc1F7a43Db81e7DC4b3F4C6C2AcdCBdC17C41b0Dc);
+
+    // op goerli
+    ILimitOrder public constant limitOrder =
+        ILimitOrder(0x2C8b73B0B119e9a5f4De4b137d1e1Fd5b0e2603D);
 
     string public constant name = "Synthetix-Perp-Limit-Order-v1.1";
 
-    function submitLimitOrder(address market, ILimitOrder.Request memory request)
+    function submitLimitOrder(
+        address market,
+        ILimitOrder.Request memory request
+    )
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
@@ -58,7 +71,10 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
         _eventParam = abi.encode(market);
     }
 
-    function submitCloseLimitOrder(address market, ILimitOrder.Request memory request)
+    function submitCloseLimitOrder(
+        address market,
+        ILimitOrder.Request memory request
+    )
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
@@ -69,7 +85,9 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
             IAccount(address(this)).enable(address(limitOrder));
         }
 
-        IPerpMarket.Position memory position = IPerpMarket(market).positions(address(this));
+        IPerpMarket.Position memory position = IPerpMarket(market).positions(
+            address(this)
+        );
         require(position.size != 0, "no-active-position");
 
         request.sizeDelta = -position.size;
@@ -80,7 +98,10 @@ contract SynthetixPerpLimitOrderConnector is BaseConnector {
         _eventParam = abi.encode(market);
     }
 
-    function cancelLimitOrder(uint256 orderId, bool toDisable)
+    function cancelLimitOrder(
+        uint256 orderId,
+        bool toDisable
+    )
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
