@@ -17,6 +17,10 @@ contract DeployProxyResolver is Script {
         SynthetixPerpResolver resolver = new SynthetixPerpResolver();
         // new TransparentUpgradeableProxy(address(resolver), admin, "");
 
+        TransparentUpgradeableProxy proxy =
+            TransparentUpgradeableProxy(payable(0x50fF859DE6bc8E71aCc1Dd73E5C4d15B46d04E63));
+        proxy.upgradeTo(address(resolver));
+
         vm.stopBroadcast();
     }
 }

@@ -56,6 +56,13 @@ interface IPerpMarket {
     function fundingSequenceLength() external view returns (uint256 length);
 }
 
+interface IBoomerang {
+    function calculate(address market_, int256 sizeDelta, int256 marginDelta, address sender)
+        external
+        view
+        returns (uint256 margin, int256 size, uint256 price, uint256 liqPrice, uint256 fee, uint8 status);
+}
+
 contract SynthetixPerpResolver {
     using FixedPointMathLib for uint256;
 
@@ -68,21 +75,11 @@ contract SynthetixPerpResolver {
         uint256 minMargin;
     }
 
-    enum Status {
-        Ok,
-        InvalidPrice,
-        InvalidOrderPrice,
-        PriceOutOfBounds,
-        CanLiquidate,
-        CannotLiquidate,
-        MaxMarketSizeExceeded,
-        MaxLeverageExceeded,
-        InsufficientMargin,
-        NotPermitted,
-        NilOrder,
-        NoPositionOpen,
-        PriceTooVolatile,
-        PriceImpactToleranceExceeded
+    struct NewData {
+        IPerpMarket market;
+        bytes32 marketKey;
+        int256 size;
+        uint256 minMargin;
     }
 
     IAddressResolver private constant addressResolver = IAddressResolver(0x95A6a3f44a70172E7d50a9e28c85Dfd712756B8C);
@@ -92,6 +89,8 @@ contract SynthetixPerpResolver {
 
     IDynamicKeeperFeeModule private constant dynamicKeeperFee =
         IDynamicKeeperFeeModule(0xF4bc5588aAB8CBB412baDd3674094ECF808286f6);
+
+    IBoomerang private constant boomerang = IBoomerang(0x1BAA02FD3744b299723f2e3ad2b7C241Bea1afA5);
 
     // function balances(address user, address[] memory token, address[] memory market)
     //     external
@@ -129,83 +128,23 @@ contract SynthetixPerpResolver {
             uint256 totalMargin,
             uint256 accessibleMargin,
             uint256 assetPrice,
-            Status status
+            uint8 status
         )
     {
+        NewData memory data;
+        data.market = IPerpMarket(market);
+        data.marketKey = data.market.marketKey();
+        (totalMargin, data.size, assetPrice, liquidationPrice, fee, status) =
+            boomerang.calculate(market, sizeDelta, marginDelta, account);
+
         minKeeperFee = dynamicKeeperFee.getMinKeeperFee();
-        IPerpMarket perpMarket = IPerpMarket(market);
-        IPerpMarket.Position memory position = perpMarket.positions(account);
-        Data memory data;
-
-        data.marketKey = perpMarket.marketKey();
-
-        (data.currentPrice,) = perpMarket.assetPrice();
-
-        (fee,) = perpMarket.orderFee(sizeDelta, 2);
-
-        (data.margin,) = perpMarket.remainingMargin(account);
-
-        if (data.margin == 0 && marginDelta <= 0) {
-            return (minKeeperFee, 0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
-        }
-
-        if (marginDelta > 0) {
-            data.margin += _abs(marginDelta);
-        } else {
-            uint256 absMargin = _abs(marginDelta);
-            if (absMargin > data.margin) {
-                return (minKeeperFee, 0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
-            }
-            data.margin -= _abs(marginDelta);
-        }
-
-        data.margin -= fee + 2e18;
 
         data.minMargin = _getParam(data.marketKey, "perpsV2MinInitialMargin");
 
-        if (data.margin < data.minMargin) {
-            return (minKeeperFee, 0, 0, 0, 0, data.currentPrice, Status.InsufficientMargin);
-        }
-
-        int256 oldSize = position.size;
-
-        position.size += int128(sizeDelta);
-
-        data.isMaxMarket = _isMaxMarket(perpMarket, oldSize, position.size);
-
-        if (data.isMaxMarket) {
-            status = Status.MaxMarketSizeExceeded;
-        }
-
-        int256 liquidationMargin = int256(_liquidationMargin(data.marketKey, position.size, data.currentPrice));
-
-        if (_abs(liquidationMargin) >= data.margin) {
-            status = Status.CanLiquidate;
-        }
-
-        int256 liquidationPremium = int256(_liquidationPremium(data.marketKey, position.size, data.currentPrice));
-        int256 liqPrice = position.size == 0
-            ? int256(0)
-            : (
-                int256(data.currentPrice)
-                    + wadDiv(liquidationMargin - int256(data.margin) - liquidationPremium, position.size)
-            );
-        liquidationPrice = uint256(_max(0, liqPrice));
-
-        uint256 leverage = data.margin == 0 ? 0 : _abs(int256(position.size)).mulDivDown(data.currentPrice, data.margin);
-        uint256 maxLeverage = _getParam(data.marketKey, "maxLeverage") + 1e16;
-
-        if (leverage > maxLeverage) {
-            status = Status.MaxLeverageExceeded;
-        }
-
-        totalMargin = data.margin;
-
-        uint256 inaccessible = _inaccessibleMargin(data.marketKey, position.size, data.currentPrice, data.minMargin);
+        uint256 inaccessible = _inaccessibleMargin(data.marketKey, data.size, assetPrice, data.minMargin);
         if (inaccessible < totalMargin) {
             accessibleMargin = totalMargin - inaccessible;
         }
-        assetPrice = data.currentPrice;
     }
 
     function _liquidationMargin(bytes32 marketKey, int256 size, uint256 price) internal view returns (uint256) {
@@ -228,7 +167,7 @@ contract SynthetixPerpResolver {
         uint256 notionalSize = _abs(size).mulWadDown(price);
         uint256 skewScale = _getParam(marketKey, "skewScale");
         uint256 liquidationPremiumMultiplier = _getParam(marketKey, "liquidationPremiumMultiplier");
-        return _abs(size).divWadDown(skewScale).mulWadDown(notionalSize).mulWadDown(liquidationPremiumMultiplier);
+        return _abs(size).mulWadDown(notionalSize).mulDivDown(liquidationPremiumMultiplier, skewScale);
     }
 
     function _isMaxMarket(IPerpMarket perpMarket, int256 oldSize, int256 newSize) internal view returns (bool) {

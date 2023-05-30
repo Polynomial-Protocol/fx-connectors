@@ -20,8 +20,9 @@
       "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa",
       "SynthetixPerp": {
         "proxy": "0x50fF859DE6bc8E71aCc1Dd73E5C4d15B46d04E63",
-        "implementation": "0x550432033C18EEF82ccB1853F1E691Bc0504544F"
-      }
+        "implementation": "0xDE16Ce9ae3C6D788Ca6De1e19E6bC6aE81e0630b"
+      },
+      "Boomerang": "0x1BAA02FD3744b299723f2e3ad2b7C241Bea1afA5"
     },
     "automations": {
       "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620",
