@@ -33,7 +33,7 @@ contract DeployLimitOrder is Script {
             data
         );
 
-        SynthetixLimitOrders target = SynthetixLimitOrders(address(proxy));
+        SynthetixLimitOrders target = SynthetixLimitOrders(payable(address(proxy)));
 
         target.updatePythTimeCutoff(120); // 2 Mins
         target.updatePythDeltaCutoff(2e16); // 2%
@@ -175,76 +175,30 @@ contract DeployLimitOrder is Script {
 
         // pyth ids for op goerli
         bytes32[23] memory _ids = [
-            bytes32(
-                0xd6b3bc030a8bbb7dd9de46fb564c34bb7f860dead8985eb16a49cdc62f8ab3a5
-            ), // AAVE
-            bytes32(
-                0xcb1743d0e3e3eace7e84b8230dc082829813e3ab04e91b503c08e9a441c0ea8b
-            ), // APE
+            bytes32(0xd6b3bc030a8bbb7dd9de46fb564c34bb7f860dead8985eb16a49cdc62f8ab3a5), // AAVE
+            bytes32(0xcb1743d0e3e3eace7e84b8230dc082829813e3ab04e91b503c08e9a441c0ea8b), // APE
             // ARB not supported by synthetix on op goerli
-            bytes32(
-                0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3
-            ), // ATOM
-            bytes32(
-                0x2646ca1e1186fd2bb48b2ab3effa841d233b7e904b2caebb19c8030784a89c97
-            ), // AUD
-            bytes32(
-                0xd7566a3ba7f7286ed54f4ae7e983f4420ae0b1e0f3892e11f9c4ab107bbad7b9
-            ), // AVAX
-            bytes32(
-                0xb327d9cf0ecd793a175fa70ac8d2dc109d4462758e556962c4a87b02ec4f3f15
-            ), // AXS
-            bytes32(
-                0xecf553770d9b10965f8fb64771e93f5690a182edc32be4a3236e0caaa6e0581a
-            ), // BNB
-            bytes32(
-                0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b
-            ), // BTC
-            bytes32(
-                0x31775e1d6897129e8a84eeba975778fb50015b88039e9bc140bbd839694ac0ae
-            ), // DOGE
-            bytes32(
-                0x05a934cb3bbadef93b525978ab5bd3d5ce3b8fc6717b9ea182a688c5d8ee8e02
-            ), // DYDX
-            bytes32(
-                0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6
-            ), // ETH
-            bytes32(
-                0xc1b12769f6633798d45adfd62bfc70114839232e2949b01fb3d3f927d2606154
-            ), // EUR
-            bytes32(
-                0xaa67a6594d0e1578faa3bba80bec5b31e461b945e4fbab59eeab38ece09335fb
-            ), // FLOW
-            bytes32(
-                0x9b7bfd7654cbb80099d5edc0a29159afc9e9b4636c811cf8c3b95bd11dd8e3dd
-            ), // FTM
-            bytes32(
-                0xbcbdc2755bd74a2065f9d3283c2b8acbd898e473bdb90a6764b3dbd467c56ecd
-            ), // GBP
-            bytes32(
-                0x83be4ed61dd8a3518d198098ce37240c494710a7b9d85e35d9fceac21df08994
-            ), // LINK
-            bytes32(
-                0xd2c2c1f2bba8e0964f9589e060c2ee97f5e19057267ac3284caef3bd50bd2cb5
-            ), // MATIC
-            bytes32(
-                0x27e867f0f4f61076456d1a73b14c7edc1cf5cef4f4d6193a33424288f11bd0f4
-            ), // NEAR
-            bytes32(
-                0x71334dcd37620ce3c33e3bafef04cc80dec083042e49b734315b36d1aad7991f
-            ), // OP
-            bytes32(
-                0xfe650f0367d4a7ef9815a593ea15d36593f0643aaaf0149bb04be67ab851decd
-            ), // SOL
-            bytes32(
-                0x64ae1fc7ceacf2cd59bee541382ff3770d847e63c40eb6cf2413e7de5e93078a
-            ), // UNI
-            bytes32(
-                0x321ba4d608fa75ba76d6d73daa715abcbdeb9dba02257f05a1b59178b49f599b
-            ), // XAG
-            bytes32(
-                0x30a19158f5a54c0adf8fb7560627343f22a1bc852b89d56be1accdc5dbf96d0e
-            ) // XAU
+            bytes32(0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3), // ATOM
+            bytes32(0x2646ca1e1186fd2bb48b2ab3effa841d233b7e904b2caebb19c8030784a89c97), // AUD
+            bytes32(0xd7566a3ba7f7286ed54f4ae7e983f4420ae0b1e0f3892e11f9c4ab107bbad7b9), // AVAX
+            bytes32(0xb327d9cf0ecd793a175fa70ac8d2dc109d4462758e556962c4a87b02ec4f3f15), // AXS
+            bytes32(0xecf553770d9b10965f8fb64771e93f5690a182edc32be4a3236e0caaa6e0581a), // BNB
+            bytes32(0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b), // BTC
+            bytes32(0x31775e1d6897129e8a84eeba975778fb50015b88039e9bc140bbd839694ac0ae), // DOGE
+            bytes32(0x05a934cb3bbadef93b525978ab5bd3d5ce3b8fc6717b9ea182a688c5d8ee8e02), // DYDX
+            bytes32(0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6), // ETH
+            bytes32(0xc1b12769f6633798d45adfd62bfc70114839232e2949b01fb3d3f927d2606154), // EUR
+            bytes32(0xaa67a6594d0e1578faa3bba80bec5b31e461b945e4fbab59eeab38ece09335fb), // FLOW
+            bytes32(0x9b7bfd7654cbb80099d5edc0a29159afc9e9b4636c811cf8c3b95bd11dd8e3dd), // FTM
+            bytes32(0xbcbdc2755bd74a2065f9d3283c2b8acbd898e473bdb90a6764b3dbd467c56ecd), // GBP
+            bytes32(0x83be4ed61dd8a3518d198098ce37240c494710a7b9d85e35d9fceac21df08994), // LINK
+            bytes32(0xd2c2c1f2bba8e0964f9589e060c2ee97f5e19057267ac3284caef3bd50bd2cb5), // MATIC
+            bytes32(0x27e867f0f4f61076456d1a73b14c7edc1cf5cef4f4d6193a33424288f11bd0f4), // NEAR
+            bytes32(0x71334dcd37620ce3c33e3bafef04cc80dec083042e49b734315b36d1aad7991f), // OP
+            bytes32(0xfe650f0367d4a7ef9815a593ea15d36593f0643aaaf0149bb04be67ab851decd), // SOL
+            bytes32(0x64ae1fc7ceacf2cd59bee541382ff3770d847e63c40eb6cf2413e7de5e93078a), // UNI
+            bytes32(0x321ba4d608fa75ba76d6d73daa715abcbdeb9dba02257f05a1b59178b49f599b), // XAG
+            bytes32(0x30a19158f5a54c0adf8fb7560627343f22a1bc852b89d56be1accdc5dbf96d0e) // XAU
         ];
 
         for (uint256 i = 0; i < 23; i++) {

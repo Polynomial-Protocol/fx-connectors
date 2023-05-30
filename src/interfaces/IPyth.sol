@@ -14,4 +14,6 @@ interface IPyth {
     }
 
     function getPriceUnsafe(bytes32 id) external view returns (Price memory price);
+
+    function updatePriceFeeds(bytes[] calldata updateData) external payable;
 }

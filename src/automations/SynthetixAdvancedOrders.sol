@@ -28,18 +28,10 @@ interface IPerpMarket {
 }
 
 interface IAccount {
-    function cast(
-        string[] calldata _targetNames,
-        bytes[] calldata _datas,
-        address _origin
-    ) external;
+    function cast(string[] calldata _targetNames, bytes[] calldata _datas, address _origin) external;
 }
 
-contract SynthetixLimitOrders is
-    Initializable,
-    AuthUpgradable,
-    ReentrancyGuardUpgradable
-{
+contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
     /// -----------------------------------------------------------------------
     /// Library usage
     /// -----------------------------------------------------------------------
@@ -123,13 +115,10 @@ contract SynthetixLimitOrders is
     /// @notice Pyth Oracle IDs to read for each market
     mapping(address => bytes32) public pythIds;
 
-    function initialize(
-        IPyth _pyth,
-        address _owner,
-        address _feeReceipient,
-        uint256 _flatFee,
-        uint256 _percentageFee
-    ) public initializer {
+    function initialize(IPyth _pyth, address _owner, address _feeReceipient, uint256 _flatFee, uint256 _percentageFee)
+        public
+        initializer
+    {
         _auth_init(_owner, Authority(address(0x0)));
         _reentrancy_init();
 
@@ -150,10 +139,7 @@ contract SynthetixLimitOrders is
     /// User Actions
     /// -----------------------------------------------------------------------
 
-    function submitFullOrder(
-        address market,
-        FullOrderRequest memory request
-    ) external nonReentrant {
+    function submitFullOrder(address market, FullOrderRequest memory request) external nonReentrant {
         require(isAllowed());
         require(request.expiry > block.timestamp, "invalid-expiry");
 
@@ -162,10 +148,7 @@ contract SynthetixLimitOrders is
 
         require(request.priceA != 0 && request.priceB != 0, "range-is-zero");
         require(request.priceB > request.priceA, "invalid-range");
-        require(
-            request.priceA > requestPrice || request.priceB < requestPrice,
-            "invalid-range-for-current-price"
-        );
+        require(request.priceA > requestPrice || request.priceB < requestPrice, "invalid-range-for-current-price");
 
         FullOrder storage order = fullOrders[nextFullOrderId++];
 
@@ -182,34 +165,20 @@ contract SynthetixLimitOrders is
         order.secondPairA = request.secondPairA;
         order.secondPairB = request.secondPairB;
 
-        emit SubmitFullOrder(
-            market,
-            msg.sender,
-            nextFullOrderId - 1,
-            requestPrice,
-            request
-        );
+        emit SubmitFullOrder(market, msg.sender, nextFullOrderId - 1, requestPrice, request);
     }
 
-    function submitPairOrder(
-        address market,
-        PairOrderRequest memory request
-    ) external nonReentrant {
+    function submitPairOrder(address market, PairOrderRequest memory request) external nonReentrant {
         require(isAllowed());
         require(request.expiry > block.timestamp, "invalid-expiry");
 
         (uint256 requestPrice, bool invalid) = IPerpMarket(market).assetPrice();
         require(!invalid && requestPrice != 0, "invalid-current-price");
 
-        require(
-            request.firstPairA != 0 && request.firstPairA != 0,
-            "range-is-zero"
-        );
+        require(request.firstPairA != 0 && request.firstPairA != 0, "range-is-zero");
         require(request.firstPairB > request.firstPairA, "invalid-range");
         require(
-            request.firstPairA > requestPrice ||
-                request.firstPairB < requestPrice,
-            "invalid-range-for-current-price"
+            request.firstPairA > requestPrice || request.firstPairB < requestPrice, "invalid-range-for-current-price"
         );
 
         FullOrder storage order = fullOrders[nextFullOrderId++];
@@ -226,38 +195,23 @@ contract SynthetixLimitOrders is
         order.secondPairA = request.secondPairA;
         order.secondPairB = request.secondPairB;
 
-        emit SubmitPairOrder(
-            market,
-            msg.sender,
-            nextFullOrderId - 1,
-            requestPrice,
-            request
-        );
+        emit SubmitPairOrder(market, msg.sender, nextFullOrderId - 1, requestPrice, request);
     }
 
-    function addPairOrder(
-        uint256 id,
-        PairOrderRequest memory request
-    ) external nonReentrant {
+    function addPairOrder(uint256 id, PairOrderRequest memory request) external nonReentrant {
         FullOrder storage order = fullOrders[id];
         require(msg.sender == order.user);
         require(!order.isCancelled, "order-already-cancelled");
         require(!order.isCompleted, "order-already-completed");
         require(request.expiry > block.timestamp, "invalid-expiry");
 
-        (uint256 requestPrice, bool invalid) = IPerpMarket(order.market)
-            .assetPrice();
+        (uint256 requestPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
         require(!invalid && requestPrice != 0, "invalid-current-price");
 
-        require(
-            request.firstPairA != 0 && request.firstPairA != 0,
-            "range-is-zero"
-        );
+        require(request.firstPairA != 0 && request.firstPairA != 0, "range-is-zero");
         require(request.firstPairB > request.firstPairA, "invalid-range");
         require(
-            request.firstPairA > requestPrice ||
-                request.firstPairB < requestPrice,
-            "invalid-range-for-current-price"
+            request.firstPairA > requestPrice || request.firstPairB < requestPrice, "invalid-range-for-current-price"
         );
 
         order.firstPairA = request.firstPairA;
@@ -292,10 +246,7 @@ contract SynthetixLimitOrders is
         emit CancelPairOrder(order.market, order.user, orderId);
     }
 
-    function cancelIndividualOrder(
-        uint256 orderId,
-        bool isFirst
-    ) external nonReentrant {
+    function cancelIndividualOrder(uint256 orderId, bool isFirst) external nonReentrant {
         FullOrder storage order = fullOrders[orderId];
         require(msg.sender == order.user, "unauthorized");
 
@@ -314,9 +265,7 @@ contract SynthetixLimitOrders is
     /// Views
     /// -----------------------------------------------------------------------
 
-    function getFullOrder(
-        uint256 id
-    ) external view returns (FullOrder memory order) {
+    function getFullOrder(uint256 id) external view returns (FullOrder memory order) {
         order = fullOrders[id];
     }
 
@@ -324,10 +273,17 @@ contract SynthetixLimitOrders is
     /// Keeper Actions
     /// -----------------------------------------------------------------------
 
-    function executeMultiple(
-        uint256[] memory limitOrders,
-        uint256[] memory pairOrders
-    ) external requiresAuth {
+    function updateAndExecuteLimitOrder(bytes[] calldata updateData, uint256 orderId) external payable requiresAuth {
+        pyth.updatePriceFeeds{value: msg.value}(updateData);
+        executeLimitOrder(orderId);
+    }
+
+    function updateAndExecutePairOrder(bytes[] calldata updateData, uint256 orderId) external payable requiresAuth {
+        pyth.updatePriceFeeds{value: msg.value}(updateData);
+        executePairOrder(orderId);
+    }
+
+    function executeMultiple(uint256[] memory limitOrders, uint256[] memory pairOrders) external requiresAuth {
         for (uint256 i = 0; i < limitOrders.length; i++) {
             executeLimitOrder(limitOrders[i]);
         }
@@ -337,15 +293,13 @@ contract SynthetixLimitOrders is
         }
     }
 
-    function executeLimitOrder(
-        uint256 orderId
-    ) public nonReentrant requiresAuth {
+    function executeLimitOrder(uint256 orderId) public nonReentrant requiresAuth {
         FullOrder storage order = fullOrders[orderId];
         require(block.timestamp <= order.expiry, "order-expired");
         require(!order.isStarted, "order-executed");
         require(!order.isCancelled, "order-cancelled");
 
-        (bool isInRange, uint256 currentPrice, ) = isInPriceRange(order, true);
+        (bool isInRange, uint256 currentPrice,) = isInPriceRange(order, true);
         require(isInRange, "price-not-in-range");
 
         uint256 dollarValue = _abs(order.sizeDelta).mulWadDown(currentPrice);
@@ -355,20 +309,12 @@ contract SynthetixLimitOrders is
         bytes[] memory datas = new bytes[](3);
 
         targets[0] = "Synthetix-Perp-v1.3";
-        datas[0] = abi.encodeWithSignature(
-            "removeMargin(address,uint256,uint256,uint256)",
-            order.market,
-            totalFees,
-            0,
-            0
-        );
+        datas[0] =
+            abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
 
         targets[1] = "Synthetix-Perp-v1.3";
         datas[1] = abi.encodeWithSignature(
-            "trade(address,int256,uint256)",
-            order.market,
-            order.sizeDelta,
-            order.priceImpactDelta
+            "trade(address,int256,uint256)", order.market, order.sizeDelta, order.priceImpactDelta
         );
 
         targets[2] = "Basic-v1";
@@ -385,33 +331,20 @@ contract SynthetixLimitOrders is
 
         order.isStarted = true;
 
-        emit ExecuteLimitOrder(
-            order.market,
-            order.user,
-            orderId,
-            currentPrice,
-            totalFees
-        );
+        emit ExecuteLimitOrder(order.market, order.user, orderId, currentPrice, totalFees);
     }
 
-    function executePairOrder(
-        uint256 orderId
-    ) public nonReentrant requiresAuth {
+    function executePairOrder(uint256 orderId) public nonReentrant requiresAuth {
         FullOrder storage order = fullOrders[orderId];
         require(block.timestamp <= order.expiry, "order-expired");
         require(order.isStarted, "limit-order-not-executed-yet");
         require(!order.isCompleted, "pair-order-already-executed");
         require(!order.isCancelled, "order-cancelled");
 
-        (
-            bool isInRange,
-            uint256 currentPrice,
-            bool isInFirstRange
-        ) = isInPriceRange(order, true);
+        (bool isInRange, uint256 currentPrice, bool isInFirstRange) = isInPriceRange(order, false);
         require(isInRange, "price-not-in-range");
 
-        IPerpMarket.Position memory position = IPerpMarket(order.market)
-            .positions(order.user);
+        IPerpMarket.Position memory position = IPerpMarket(order.market).positions(order.user);
 
         if (_abs(order.sizeDelta) > _abs(position.size)) {
             order.sizeDelta = position.size;
@@ -430,11 +363,7 @@ contract SynthetixLimitOrders is
         }
     }
 
-    function _executePairOrder(
-        FullOrder memory order,
-        uint256 orderId,
-        uint256 currentPrice
-    ) internal {
+    function _executePairOrder(FullOrder memory order, uint256 orderId, uint256 currentPrice) internal {
         uint256 dollarValue = _abs(order.sizeDelta).mulWadDown(currentPrice);
         uint256 totalFees = flatFee + dollarValue.mulWadDown(percentageFee);
 
@@ -442,20 +371,12 @@ contract SynthetixLimitOrders is
         bytes[] memory datas = new bytes[](3);
 
         targets[0] = "Synthetix-Perp-v1.3";
-        datas[0] = abi.encodeWithSignature(
-            "removeMargin(address,uint256,uint256,uint256)",
-            order.market,
-            totalFees,
-            0,
-            0
-        );
+        datas[0] =
+            abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
 
         targets[1] = "Synthetix-Perp-v1.3";
         datas[1] = abi.encodeWithSignature(
-            "trade(address,int256,uint256)",
-            order.market,
-            -order.sizeDelta,
-            order.priceImpactDelta
+            "trade(address,int256,uint256)", order.market, -order.sizeDelta, order.priceImpactDelta
         );
 
         targets[2] = "Basic-v1";
@@ -472,13 +393,14 @@ contract SynthetixLimitOrders is
 
         order.isCompleted = true;
 
-        emit ExecutePairOrder(
-            order.market,
-            order.user,
-            orderId,
-            currentPrice,
-            totalFees
-        );
+        emit ExecutePairOrder(order.market, order.user, orderId, currentPrice, totalFees);
+    }
+
+    receive() external payable {
+        (bool success,) = feeReceipient.call{value: msg.value}("");
+        require(success);
+
+        emit ReceiveEther(msg.sender, msg.value);
     }
 
     /// -----------------------------------------------------------------------
@@ -488,12 +410,8 @@ contract SynthetixLimitOrders is
     /// @notice Returns whether an order can be executed or not based on current price
     /// @param order Order struct
     /// @param isFirst Whether the request is for the first order or pair order
-    function isInPriceRange(
-        FullOrder memory order,
-        bool isFirst
-    ) internal view returns (bool, uint256, bool) {
-        (uint256 currentPrice, bool invalid) = IPerpMarket(order.market)
-            .assetPrice();
+    function isInPriceRange(FullOrder memory order, bool isFirst) internal view returns (bool, uint256, bool) {
+        (uint256 currentPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
         if (currentPrice == 0 || invalid) return (false, currentPrice, false);
 
         bytes32 pythId = pythIds[order.market];
@@ -503,36 +421,27 @@ contract SynthetixLimitOrders is
             ? (actualPythPrice - currentPrice).divWadDown(currentPrice)
             : (currentPrice - actualPythPrice).divWadDown(actualPythPrice);
 
-        bool isPythPriceStale = pythPrice.price <= 0 ||
-            block.timestamp - pythPrice.publishTime > pythPriceTimeCutoff ||
-            priceDelta > pythPriceDeltaCutoff;
+        bool isPythPriceStale = pythPrice.price <= 0 || block.timestamp - pythPrice.publishTime > pythPriceTimeCutoff
+            || priceDelta > pythPriceDeltaCutoff;
 
         if (isFirst) {
-            if (order.priceA >= currentPrice && order.priceB <= currentPrice)
+            if (order.priceA >= currentPrice && order.priceB <= currentPrice) {
                 return (true, currentPrice, false);
+            }
 
-            if (
-                !isPythPriceStale &&
-                order.priceA >= actualPythPrice &&
-                order.priceB <= actualPythPrice
-            ) {
+            if (!isPythPriceStale && order.priceA >= actualPythPrice && order.priceB <= actualPythPrice) {
                 return (true, actualPythPrice, false);
             }
         } else {
-            bool isInFirstRange = currentPrice >= order.firstPairA &&
-                currentPrice <= order.firstPairB;
-            bool isInSecondRange = currentPrice >= order.secondPairA &&
-                currentPrice <= order.secondPairB;
+            bool isInFirstRange = currentPrice >= order.firstPairA && currentPrice <= order.firstPairB;
+            bool isInSecondRange = currentPrice >= order.secondPairA && currentPrice <= order.secondPairB;
 
-            if (isInFirstRange || isInSecondRange)
+            if (isInFirstRange || isInSecondRange) {
                 return (true, currentPrice, isInFirstRange);
+            }
 
-            isInFirstRange =
-                actualPythPrice >= order.firstPairA &&
-                actualPythPrice <= order.firstPairB;
-            isInSecondRange =
-                actualPythPrice >= order.secondPairA &&
-                actualPythPrice <= order.secondPairB;
+            isInFirstRange = actualPythPrice >= order.firstPairA && actualPythPrice <= order.firstPairB;
+            isInSecondRange = actualPythPrice >= order.secondPairA && actualPythPrice <= order.secondPairB;
 
             if (!isPythPriceStale && (isInFirstRange || isInSecondRange)) {
                 return (true, actualPythPrice, isInFirstRange);
@@ -544,10 +453,7 @@ contract SynthetixLimitOrders is
 
     /// @notice Returns whether an address is a SCW or not
     function isAllowed() internal view returns (bool) {
-        return
-            IList(0xd567E18FDF8aFa58953DD8B0c1b6C97adF67566B).accountID(
-                msg.sender
-            ) != 0;
+        return IList(0xd567E18FDF8aFa58953DD8B0c1b6C97adF67566B).accountID(msg.sender) != 0;
     }
 
     function _signedAbs(int256 x) internal pure returns (int256) {
@@ -558,10 +464,7 @@ contract SynthetixLimitOrders is
         return uint256(_signedAbs(x));
     }
 
-    function _getWadPrice(
-        int64 price,
-        int32 expo
-    ) internal pure returns (uint256 wadPrice) {
+    function _getWadPrice(int64 price, int32 expo) internal pure returns (uint256 wadPrice) {
         uint256 exponent = _abs(expo);
         uint256 lastPrice = _abs(price);
 
@@ -587,10 +490,7 @@ contract SynthetixLimitOrders is
     /// @notice Update fee
     /// @param _flatFee New flat fee rate
     /// @param _percentageFee New percentage fee rate
-    function updateFees(
-        uint256 _flatFee,
-        uint256 _percentageFee
-    ) external requiresAuth {
+    function updateFees(uint256 _flatFee, uint256 _percentageFee) external requiresAuth {
         emit UpdateFees(flatFee, _flatFee, percentageFee, _percentageFee);
 
         flatFee = _flatFee;
@@ -600,10 +500,7 @@ contract SynthetixLimitOrders is
     /// @notice Update Pyth Oracle ID
     /// @param market Address of the market
     /// @param id New Pyth Oracle ID
-    function updatePythOracleId(
-        address market,
-        bytes32 id
-    ) external requiresAuth {
+    function updatePythOracleId(address market, bytes32 id) external requiresAuth {
         emit UpdatePythId(market, pythIds[market], id);
 
         pythIds[market] = id;
@@ -612,10 +509,7 @@ contract SynthetixLimitOrders is
     /// @notice Update Pyth Oracle IDs
     /// @param markets Market addresses
     /// @param ids Pyth Oracle IDs
-    function updatePythOracleIds(
-        address[] memory markets,
-        bytes32[] memory ids
-    ) external requiresAuth {
+    function updatePythOracleIds(address[] memory markets, bytes32[] memory ids) external requiresAuth {
         require(markets.length == ids.length);
         for (uint256 i = 0; i < markets.length; i++) {
             emit UpdatePythId(markets[i], pythIds[markets[i]], ids[i]);
@@ -652,12 +546,7 @@ contract SynthetixLimitOrders is
     /// @param newFlat New flat fee rate
     /// @param oldPercentage Old percentage fee rate
     /// @param newPercentage New percentage fee rate
-    event UpdateFees(
-        uint256 oldFlat,
-        uint256 newFlat,
-        uint256 oldPercentage,
-        uint256 newPercentage
-    );
+    event UpdateFees(uint256 oldFlat, uint256 newFlat, uint256 oldPercentage, uint256 newPercentage);
 
     /// @notice Emitted when Pyth oracle IDs are updated
     /// @param market Address of the market
@@ -682,11 +571,7 @@ contract SynthetixLimitOrders is
     /// @param requestPrice Price of the asset at the time of request
     /// @param request Request Params
     event SubmitFullOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId,
-        uint256 requestPrice,
-        FullOrderRequest request
+        address indexed market, address indexed user, uint256 orderId, uint256 requestPrice, FullOrderRequest request
     );
 
     /// @notice Emitted when an order is submitted
@@ -696,11 +581,7 @@ contract SynthetixLimitOrders is
     /// @param requestPrice Price of the asset at the time of request
     /// @param request Request Params
     event SubmitPairOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId,
-        uint256 requestPrice,
-        PairOrderRequest request
+        address indexed market, address indexed user, uint256 orderId, uint256 requestPrice, PairOrderRequest request
     );
 
     /// @notice Emitted when an pair order is added to an existing full order
@@ -710,44 +591,27 @@ contract SynthetixLimitOrders is
     /// @param requestPrice Price of the asset at the time of request
     /// @param request Request Params
     event AddPairOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId,
-        uint256 requestPrice,
-        PairOrderRequest request
+        address indexed market, address indexed user, uint256 orderId, uint256 requestPrice, PairOrderRequest request
     );
 
     /// @notice Emitted when an order request is cancelled
     /// @param market Address of the perp v2 market
     /// @param user Address of the user
     /// @param orderId Order ID
-    event CancelFullOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId
-    );
+    event CancelFullOrder(address indexed market, address indexed user, uint256 orderId);
 
     /// @notice Emitted when a pair order request is cancelled
     /// @param market Address of the perp v2 market
     /// @param user Address of the user
     /// @param orderId Order ID
-    event CancelPairOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId
-    );
+    event CancelPairOrder(address indexed market, address indexed user, uint256 orderId);
 
     /// @notice Emitted when an individual order from paid order request is cancelled
     /// @param market Address of the perp v2 market
     /// @param user Address of the user
     /// @param orderId Order ID
     /// @param isFirst Whether the individual order is the first one or second
-    event CancelIndividualOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId,
-        bool isFirst
-    );
+    event CancelIndividualOrder(address indexed market, address indexed user, uint256 orderId, bool isFirst);
 
     /// @notice Emitted when a limit order is executed
     /// @param market Address of the perp v2 market
@@ -756,11 +620,7 @@ contract SynthetixLimitOrders is
     /// @param executionPrice Price at the time of execution
     /// @param totalFee Total fee deducted from margin
     event ExecuteLimitOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId,
-        uint256 executionPrice,
-        uint256 totalFee
+        address indexed market, address indexed user, uint256 orderId, uint256 executionPrice, uint256 totalFee
     );
 
     /// @notice Emitted when the pair order is executed
@@ -770,10 +630,9 @@ contract SynthetixLimitOrders is
     /// @param executionPrice Price at the time of execution
     /// @param totalFee Total fee deducted from margin
     event ExecutePairOrder(
-        address indexed market,
-        address indexed user,
-        uint256 orderId,
-        uint256 executionPrice,
-        uint256 totalFee
+        address indexed market, address indexed user, uint256 orderId, uint256 executionPrice, uint256 totalFee
     );
+
+    /// @notice Emitted when ether is received
+    event ReceiveEther(address indexed from, uint256 amt);
 }
