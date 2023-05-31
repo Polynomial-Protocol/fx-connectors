@@ -22,7 +22,8 @@
         "proxy": "0x50fF859DE6bc8E71aCc1Dd73E5C4d15B46d04E63",
         "implementation": "0xDE16Ce9ae3C6D788Ca6De1e19E6bC6aE81e0630b"
       },
-      "Boomerang": "0x1BAA02FD3744b299723f2e3ad2b7C241Bea1afA5"
+      "Boomerang": "0x1BAA02FD3744b299723f2e3ad2b7C241Bea1afA5",
+      "DragonFruit": "0xEd99d0FCdb1952e06A7Be055EAfcA4F76Fc65473"
     },
     "automations": {
       "SynthetixBasisTrading": "0x3349de7822aa05f857e92d167B264809419DC620",
