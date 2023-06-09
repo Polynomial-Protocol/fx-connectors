@@ -34,7 +34,7 @@
       },
       "SynthetixAdvancedOrders": {
         "proxy": "0x7634E43aA3f446C8d9D5014d609355F728361075",
-        "implementation": "0xd76d084908b0a03543a20eda683bec595637c013"
+        "implementation": "0xd783AAdB0338035Dcc9D6B0b93D2B12379E24fd3"
       }
     }
   },

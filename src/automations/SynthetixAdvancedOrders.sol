@@ -136,6 +136,31 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     }
 
     /// -----------------------------------------------------------------------
+    /// Views
+    /// -----------------------------------------------------------------------
+
+    function getSafePrice(address market) public view returns (uint256) {
+        (uint256 clPrice, bool invalid) = IPerpMarket(market).assetPrice();
+        if (invalid) return 0;
+
+        IPyth.Price memory pythData = pyth.getPriceUnsafe(pythIds[market]);
+        uint256 pythPrice = _getWadPrice(pythData.price, pythData.expo);
+
+        uint256 priceDelta = pythPrice > clPrice
+            ? (pythPrice - clPrice).divWadDown(clPrice)
+            : (clPrice - pythPrice).divWadDown(pythPrice);
+
+        bool isPythPriceStale = pythData.price <= 0 || block.timestamp - pythData.publishTime > pythPriceTimeCutoff
+            || priceDelta > pythPriceDeltaCutoff;
+
+        if (isPythPriceStale) {
+            return clPrice;
+        }
+
+        return pythPrice;
+    }
+
+    /// -----------------------------------------------------------------------
     /// User Actions
     /// -----------------------------------------------------------------------
 
@@ -143,8 +168,8 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         require(isAllowed());
         require(request.expiry > block.timestamp, "invalid-expiry");
 
-        (uint256 requestPrice, bool invalid) = IPerpMarket(market).assetPrice();
-        require(!invalid && requestPrice != 0, "invalid-current-price");
+        uint256 requestPrice = getSafePrice(market);
+        require(requestPrice != 0, "invalid-current-price");
 
         require(request.priceA != 0 && request.priceB != 0, "range-is-zero");
         require(request.priceB > request.priceA, "invalid-range");
@@ -172,8 +197,8 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         require(isAllowed());
         require(request.expiry > block.timestamp, "invalid-expiry");
 
-        (uint256 requestPrice, bool invalid) = IPerpMarket(market).assetPrice();
-        require(!invalid && requestPrice != 0, "invalid-current-price");
+        uint256 requestPrice = getSafePrice(market);
+        require(requestPrice != 0, "invalid-current-price");
 
         require(request.firstPairA != 0 && request.firstPairA != 0, "range-is-zero");
         require(request.firstPairB > request.firstPairA, "invalid-range");
@@ -205,8 +230,8 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         require(!order.isCompleted, "order-already-completed");
         require(request.expiry > block.timestamp, "invalid-expiry");
 
-        (uint256 requestPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
-        require(!invalid && requestPrice != 0, "invalid-current-price");
+        uint256 requestPrice = getSafePrice(order.market);
+        require(requestPrice != 0, "invalid-current-price");
 
         require(request.firstPairA != 0 && request.firstPairA != 0, "range-is-zero");
         require(request.firstPairB > request.firstPairA, "invalid-range");
@@ -411,44 +436,20 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     /// @param order Order struct
     /// @param isFirst Whether the request is for the first order or pair order
     function isInPriceRange(FullOrder memory order, bool isFirst) internal view returns (bool, uint256, bool) {
-        (uint256 currentPrice, bool invalid) = IPerpMarket(order.market).assetPrice();
-        if (currentPrice == 0 || invalid) return (false, currentPrice, false);
+        uint256 safePrice = getSafePrice(order.market);
 
-        bytes32 pythId = pythIds[order.market];
-        IPyth.Price memory pythPrice = pyth.getPriceUnsafe(pythId);
-        uint256 actualPythPrice = _getWadPrice(pythPrice.price, pythPrice.expo);
-        uint256 priceDelta = actualPythPrice > currentPrice
-            ? (actualPythPrice - currentPrice).divWadDown(currentPrice)
-            : (currentPrice - actualPythPrice).divWadDown(actualPythPrice);
-
-        bool isPythPriceStale = pythPrice.price <= 0 || block.timestamp - pythPrice.publishTime > pythPriceTimeCutoff
-            || priceDelta > pythPriceDeltaCutoff;
-
-        if (isFirst) {
-            if (order.priceA >= currentPrice && order.priceB <= currentPrice) {
-                return (true, currentPrice, false);
-            }
-
-            if (!isPythPriceStale && order.priceA >= actualPythPrice && order.priceB <= actualPythPrice) {
-                return (true, actualPythPrice, false);
-            }
+        if (isFirst && order.priceA >= safePrice && order.priceB <= safePrice) {
+            return (true, safePrice, false);
         } else {
-            bool isInFirstRange = currentPrice >= order.firstPairA && currentPrice <= order.firstPairB;
-            bool isInSecondRange = currentPrice >= order.secondPairA && currentPrice <= order.secondPairB;
+            bool isInFirstRange = safePrice >= order.firstPairA && safePrice <= order.firstPairB;
+            bool isInSecondRange = safePrice >= order.secondPairA && safePrice <= order.secondPairB;
 
             if (isInFirstRange || isInSecondRange) {
-                return (true, currentPrice, isInFirstRange);
-            }
-
-            isInFirstRange = actualPythPrice >= order.firstPairA && actualPythPrice <= order.firstPairB;
-            isInSecondRange = actualPythPrice >= order.secondPairA && actualPythPrice <= order.secondPairB;
-
-            if (!isPythPriceStale && (isInFirstRange || isInSecondRange)) {
-                return (true, actualPythPrice, isInFirstRange);
+                return (true, safePrice, isInFirstRange);
             }
         }
 
-        return (false, currentPrice, false);
+        return (false, safePrice, false);
     }
 
     /// @notice Returns whether an address is a SCW or not
