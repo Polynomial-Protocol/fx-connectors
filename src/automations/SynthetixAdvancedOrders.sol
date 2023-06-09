@@ -438,7 +438,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     function isInPriceRange(FullOrder memory order, bool isFirst) internal view returns (bool, uint256, bool) {
         uint256 safePrice = getSafePrice(order.market);
 
-        if (isFirst && order.priceA >= safePrice && order.priceB <= safePrice) {
+        if (isFirst && safePrice >= order.priceA && safePrice <= order.priceB) {
             return (true, safePrice, false);
         } else {
             bool isInFirstRange = safePrice >= order.firstPairA && safePrice <= order.firstPairB;
