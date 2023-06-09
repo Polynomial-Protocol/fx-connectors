@@ -2,6 +2,7 @@
   "optimism": {
     "storage": "0x9f4e24e48D1Cd41FA87A481Ae2242372Bd32618C",
     "connectors": {
+      "Auth-v1": "0xe8F2A6B6cA9d6C342171a521bF9e22F20Ed398a8",
       "Basic-v1": "0x86ea8030221bf025bb11fadaBb794dAAA7051ae1",
       "Synthetix-Perp-v1": "0x1Df92B3Ac9AeD27115Ae4127ed098BaEc1BD8b26",
       "Synthetix-Perp-v1.2": "0x193209391242B585aE0aA6029DDD23f9eF99b779",
