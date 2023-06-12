@@ -8,9 +8,9 @@ import {BellPepper} from "../src/resolvers/BellPepper.sol";
 
 contract DeployBellPepper is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_NEW");
         vm.startBroadcast(deployerPrivateKey);
-        new BellPepper(0x649F44CAC3276557D03223Dbf6395Af65b11c11c);
+        new BellPepper(0xedf10514EF611e3808622f24e236b83cB9E51dCe);
         vm.stopBroadcast();
     }
 }
