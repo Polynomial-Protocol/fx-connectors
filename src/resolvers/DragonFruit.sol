@@ -10,13 +10,12 @@ interface IPerpMarket {
     function accessibleMargin(address account) external view returns (uint256 marginAccessible, bool invalid);
 }
 
-interface IDynamicKeeperFeeModule {
-    function getMinKeeperFee() external view returns (uint256);
+interface IPerpMarketSettings {
+    function minKeeperFee() external view returns (uint256);
 }
 
 contract DragonFruit {
-    IDynamicKeeperFeeModule private constant dynamicKeeperFee =
-        IDynamicKeeperFeeModule(0xF4bc5588aAB8CBB412baDd3674094ECF808286f6);
+    IPerpMarketSettings private constant settings = IPerpMarketSettings(0x649F44CAC3276557D03223Dbf6395Af65b11c11c);
 
     function calculate(address market, int256 sizeDelta, address account, uint256 executionPrice)
         external
@@ -31,7 +30,7 @@ contract DragonFruit {
             uint8 status
         )
     {
-        minKeeperFee = dynamicKeeperFee.getMinKeeperFee();
+        minKeeperFee = settings.minKeeperFee();
         IPerpMarket perpMarket = IPerpMarket(market);
 
         (totalMargin,, assetPrice, liquidationPrice, fee, status) =
