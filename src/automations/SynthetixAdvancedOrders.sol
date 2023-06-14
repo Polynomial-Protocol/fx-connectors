@@ -371,6 +371,8 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
 
         IPerpMarket.Position memory position = IPerpMarket(order.market).positions(order.user);
 
+        require(_sameSide(order.sizeDelta, position.size), "position-changed-direction");
+
         if (_abs(order.sizeDelta) > _abs(position.size)) {
             order.sizeDelta = position.size;
         }
@@ -463,6 +465,10 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
 
     function _abs(int256 x) internal pure returns (uint256) {
         return uint256(_signedAbs(x));
+    }
+
+    function _sameSide(int256 a, int256 b) internal pure returns (bool) {
+        return (a == 0) || (b == 0) || (a > 0) == (b > 0);
     }
 
     function _getWadPrice(int64 price, int32 expo) internal pure returns (uint256 wadPrice) {
