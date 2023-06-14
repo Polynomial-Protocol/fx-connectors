@@ -90,10 +90,12 @@ contract PlaceOrder is Script {
         IPerpsV2Market perp = IPerpsV2Market(
             0x111BAbcdd66b1B60A20152a2D3D06d36F8B5703c
         );
-        perp.transferMargin(42e16);
+        // perp.transferMargin(50e18);
 
         // perp.submitOffchainDelayedOrder(1e17, 1900e18);
+        // perp.submitOffchainDelayedOrder(14e17, 1600e18);
         perp.submitOffchainDelayedOrder(14e17, 1900e18);
+
         // perp.submitOffchainDelayedOrder(2e16, 1900e18);
 
         vm.stopBroadcast();

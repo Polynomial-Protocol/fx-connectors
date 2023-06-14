@@ -13,6 +13,10 @@ interface ERC20 {
     function transfer(address user, uint256 value) external returns (bool);
 }
 
+interface IFlagAndLiquidate {
+    function flagAndLiqBatch(address, address[] calldata) external;
+}
+
 contract FlagAndLiquidate {
     address owner;
     address susd;
