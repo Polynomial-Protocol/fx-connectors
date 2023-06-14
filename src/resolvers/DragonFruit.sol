@@ -18,7 +18,7 @@ contract DragonFruit {
     IDynamicKeeperFeeModule private constant dynamicKeeperFee =
         IDynamicKeeperFeeModule(0xF4bc5588aAB8CBB412baDd3674094ECF808286f6);
 
-    function calculate(address market, int256 sizeDelta, address account)
+    function calculate(address market, int256 sizeDelta, address account, uint256 executionPrice)
         external
         view
         returns (
@@ -35,7 +35,7 @@ contract DragonFruit {
         IPerpMarket perpMarket = IPerpMarket(market);
 
         (totalMargin,, assetPrice, liquidationPrice, fee, status) =
-            perpMarket.postTradeDetails(sizeDelta, 0, 2, account);
+            perpMarket.postTradeDetails(sizeDelta, executionPrice, 2, account);
 
         (accessibleMargin,) = perpMarket.accessibleMargin(account);
     }
