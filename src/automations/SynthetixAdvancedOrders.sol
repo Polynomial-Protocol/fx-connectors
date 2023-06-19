@@ -143,7 +143,13 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         (uint256 clPrice, bool invalid) = IPerpMarket(market).assetPrice();
         if (invalid) return 0;
 
-        IPyth.Price memory pythData = pyth.getPriceUnsafe(pythIds[market]);
+        bytes32 pythId = pythIds[market];
+
+        if (pythId == "") {
+            return clPrice;
+        }
+
+        IPyth.Price memory pythData = pyth.getPriceUnsafe(pythId);
         uint256 pythPrice = _getWadPrice(pythData.price, pythData.expo);
 
         uint256 priceDelta = pythPrice > clPrice
