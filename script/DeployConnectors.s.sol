@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {AuthConnector} from "../src/connectors/Auth.sol";
+import {MatchaConnector} from "../src/connectors/Matcha.sol";
 
 interface IConnectors {
     function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
@@ -28,11 +28,11 @@ contract DeployConnectors is Script {
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
         // Basic
-        AuthConnector auth = new AuthConnector();
-        names[0] = auth.name();
-        addrs[0] = address(auth);
+        MatchaConnector matcha = new MatchaConnector();
+        names[0] = matcha.name();
+        addrs[0] = address(matcha);
 
-        connectors.addConnectors(names, addrs);
+        connectors.updateConnectors(names, addrs);
 
         vm.stopBroadcast();
     }
