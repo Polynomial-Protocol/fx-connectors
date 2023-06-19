@@ -53,7 +53,7 @@
     "automations": {
       "SynthetixLimitOrders": {
         "proxy": "0x312013eaEEBDaD88853eB3d8D6BebE19dBF10CEE",
-        "implementation": "0x7aCaa61EC9734f0DBFcFa92EaD94485028307d80"
+        "implementation": "0x305d04465445fdaEB02c040E8267EBa6df381f61"
       },
       "SynthetixAdvancedOrders": {
         "proxy": "0x9306e8c3fc4eb748422043f72c81fe89bcc77ed7",

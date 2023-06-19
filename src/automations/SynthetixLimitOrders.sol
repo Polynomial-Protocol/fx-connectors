@@ -170,7 +170,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         string[] memory targets = new string[](3);
         bytes[] memory datas = new bytes[](3);
 
-        targets[0] = "Synthetix-Perp-v1.3";
+        targets[0] = "Synthetix-Perp-v1.4";
         datas[0] =
             abi.encodeWithSignature("removeMargin(address,uint256,uint256,uint256)", order.market, totalFees, 0, 0);
 
