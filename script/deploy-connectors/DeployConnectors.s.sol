@@ -4,12 +4,18 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {MatchaConnector} from "../src/connectors/Matcha.sol";
+import {MatchaConnector} from "../../src/connectors/Matcha.sol";
 
 interface IConnectors {
-    function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
+    function addConnectors(
+        string[] calldata _connectorNames,
+        address[] calldata _connectors
+    ) external;
 
-    function updateConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
+    function updateConnectors(
+        string[] calldata _connectorNames,
+        address[] calldata _connectors
+    ) external;
 }
 
 contract DeployConnectors is Script {
@@ -18,7 +24,9 @@ contract DeployConnectors is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // mainnet fx-wallet connectors address
-        IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
+        IConnectors connectors = IConnectors(
+            0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA
+        );
 
         // op goerli fx-wallet connectos address
         // IConnectors connectors = IConnectors(
