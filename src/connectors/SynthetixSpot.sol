@@ -21,19 +21,13 @@ contract SynthetixSpotConnector is BaseConnector {
     string public constant name = "Synthetix-Spot-v1";
 
     // op mainnet
-    // ISynthetix public constant synthetix = ISynthetix(0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4);
+    ISynthetix public constant synthetix = ISynthetix(0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4);
 
     // op goerli
-    ISynthetix public constant synthetix =
-        ISynthetix(0x2E5ED97596a8368EB9E44B1f3F25B2E813845303);
+    // ISynthetix public constant synthetix =
+    //     ISynthetix(0x2E5ED97596a8368EB9E44B1f3F25B2E813845303);
 
-    function swap(
-        bytes32 from,
-        bytes32 to,
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    )
+    function swap(bytes32 from, bytes32 to, uint256 amt, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
@@ -45,13 +39,8 @@ contract SynthetixSpotConnector is BaseConnector {
             _amt = fromSynth.balanceOf(address(this));
         }
 
-        uint256 received = synthetix.exchangeWithTracking(
-            from,
-            _amt,
-            to,
-            0x7cb6bF3e7395965b2162A7C2e6876720C20012d6,
-            "polynomial"
-        );
+        uint256 received =
+            synthetix.exchangeWithTracking(from, _amt, to, 0x7cb6bF3e7395965b2162A7C2e6876720C20012d6, "polynomial");
 
         setUint(setId, received);
 
@@ -59,11 +48,5 @@ contract SynthetixSpotConnector is BaseConnector {
         _eventParam = abi.encode(from, to, _amt, getId, setId);
     }
 
-    event LogSwap(
-        bytes32 indexed from,
-        bytes32 indexed to,
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    );
+    event LogSwap(bytes32 indexed from, bytes32 indexed to, uint256 amt, uint256 getId, uint256 setId);
 }

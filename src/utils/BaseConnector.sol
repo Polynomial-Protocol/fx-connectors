@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 interface IStorage {
-    function getUint(uint256 id) external view returns (uint256 num);
+    function getUint(uint256 id) external returns (uint256 num);
     function setUint(uint256 id, uint256 val) external;
 }
 
@@ -16,7 +16,7 @@ abstract contract BaseConnector {
     /**
      * @dev Get Uint value from FxStorage Contract.
      */
-    function getUint(uint256 getId, uint256 val) internal view returns (uint256 returnVal) {
+    function getUint(uint256 getId, uint256 val) internal returns (uint256 returnVal) {
         returnVal = getId == 0 ? val : store.getUint(getId);
     }
 

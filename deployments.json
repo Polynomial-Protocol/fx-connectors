@@ -3,19 +3,19 @@
     "storage": "0x9f4e24e48D1Cd41FA87A481Ae2242372Bd32618C",
     "connectors": {
       "Auth-v1": "0xe8F2A6B6cA9d6C342171a521bF9e22F20Ed398a8",
-      "Basic-v1": "0x86ea8030221bf025bb11fadaBb794dAAA7051ae1",
+      "Basic-v1": "0xD34F4FAE4d5eA96f15CB26AF0e45a90EAbcd7b47",
       "Synthetix-Perp-v1": "0x1Df92B3Ac9AeD27115Ae4127ed098BaEc1BD8b26",
       "Synthetix-Perp-v1.2": "0x193209391242B585aE0aA6029DDD23f9eF99b779",
       "Synthetix-Perp-v1.3": "0x1EdE41B8D5ff5E8CB2B143F47AaA1Fd541eaB17f",
-      "Synthetix-Perp-v1.4": "0x9cB1ea57dEdC564A38f207B5bb240eFA8e6C77A2",
+      "Synthetix-Perp-v1.4": "0x0a54608c6Bfa09a5E95a3824154d59005Ae03BCD",
       "Synthetix-Perp-Kwenta-v1.1": "0xAA9EeC57296D00347B8A0A786aeF2D8A81d2e01C",
-      "Synthetix-Spot-v1": "0x5630B53033b5343100eF6C44a9fA8722F40A5333",
-      "1inch-v5-v1": "0xcCcBDeCD3214196F497495ec02f7bFEB9DDB3943",
+      "Synthetix-Spot-v1": "0xee3DD0adaCE9b29b56F7176e6190C2E7bfE54594",
+      "1inch-v5-v1": "0xaDe850Bf6de778a207DC44E610fE7A45272FECE9",
       "Synthetix-Perp-Limit-Order-v1": "0x1c5BCD2839088D995902623E9Ed711080F23464b",
       "Synthetix-Perp-Limit-Order-v1.1": "0xA7a031f285187f2F8415A513a5Fc0AbD101a8775",
       "Synthetix-Basis-Trading-v1": "0x1036c75bA376354D455B5D98E8d847c68a1B4bfe",
       "Synthetix-Advanced-Orders-v1": "0xEe7Ae6C285D169D09B7248572388174762b8Aafc",
-      "Matcha-v1": "0x4458a323717Db34B0263C383895cAB92A6c6ccb5"
+      "Matcha-v1": "0xa4965dC079a6891C6F26fCd723991357d839c2d9"
     },
     "resolvers": {
       "Accounts": "0x4a0B3986cb7e23df85A64100BF222Cf69F9787Aa",
