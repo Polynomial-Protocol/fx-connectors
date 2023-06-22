@@ -66,6 +66,9 @@
       "Synthetix-Spot-v1": "0x2e2752231c54911a5cbf95cb7bDaE1ACFec65EB9",
       "Synthetix-Perp-Limit-Order-v1.1": "0x8B9aC170472C3DE6419DF8b2696BfEC21F4AeB8A"
     },
-    "polynomialAuthority": "0x6F21e6b76Ec801d2a7377aEe9376315ee5425347"
+    "polynomialAuthority": "0x6F21e6b76Ec801d2a7377aEe9376315ee5425347",
+    "utils": {
+      "emitter": "0x15eAFFAc55d9De5D763CC48e4fFBCaBbcfA9F0cc"
+    }
   }
 }
