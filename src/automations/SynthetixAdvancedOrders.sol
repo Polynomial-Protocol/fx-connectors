@@ -31,6 +31,10 @@ interface IAccount {
     function cast(string[] calldata _targetNames, bytes[] calldata _datas, address _origin) external;
 }
 
+interface IGasEstimater {
+    function getKeeperFee() external view returns (uint256);
+}
+
 contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
     /// -----------------------------------------------------------------------
     /// Library usage
@@ -333,6 +337,8 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
         (bool isInRange, uint256 currentPrice,) = isInPriceRange(order, true);
         require(isInRange, "price-not-in-range");
 
+        updateKeeperFee();
+
         uint256 dollarValue = _abs(order.sizeDelta).mulWadDown(currentPrice);
         uint256 totalFees = flatFee + dollarValue.mulWadDown(percentageFee);
 
@@ -397,6 +403,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     }
 
     function _executePairOrder(FullOrder memory order, uint256 orderId, uint256 currentPrice) internal {
+        updateKeeperFee();
         uint256 dollarValue = _abs(order.sizeDelta).mulWadDown(currentPrice);
         uint256 totalFees = flatFee + dollarValue.mulWadDown(percentageFee);
 
@@ -439,6 +446,14 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
     /// -----------------------------------------------------------------------
     /// Internals
     /// -----------------------------------------------------------------------
+
+    function updateKeeperFee() internal {
+        IGasEstimater gasEstimater = IGasEstimater(0x3A3482992A37cdf2015FF6EFB90504911d3DFB38);
+
+        uint256 keeperFee = gasEstimater.getKeeperFee();
+        emit UpdateFees(flatFee, keeperFee, percentageFee, percentageFee);
+        flatFee = keeperFee;
+    }
 
     /// @notice Returns whether an order can be executed or not based on current price
     /// @param order Order struct

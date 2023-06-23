@@ -36,11 +36,12 @@
       },
       "SynthetixAdvancedOrders": {
         "proxy": "0x7634E43aA3f446C8d9D5014d609355F728361075",
-        "implementation": "0x0b2CCcA8d866cca4c025d595faa29760870575c9"
+        "implementation": "0x0f9315Eb652f69e2f8EAC6F7f615c8DD9010dEC7"
       }
     },
     "utils": {
-      "emitter": "0x0Be3A0E2944b1C43799E2d447d1367A397c4F573"
+      "emitter": "0x0Be3A0E2944b1C43799E2d447d1367A397c4F573",
+      "gasEstimater": "0x3A3482992A37cdf2015FF6EFB90504911d3DFB38"
     }
   },
   "optimism-goerli": {
