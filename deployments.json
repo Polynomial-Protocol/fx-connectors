@@ -49,7 +49,8 @@
       "Accounts": "0xc298ea7c997ca3efa192291df17301c0ee52bcce",
       "SynthetixPerp": "0x7cffc8ab44dfee537e0c837c1a5941e10b7f8673",
       "DragonFruit": "0xC33897fa2693D40A6Cad2B11c3e0792D305BBa92",
-      "BellPepper": "0x3921F7dB4B36886e8a452A25f9232D460E04c782"
+      "BellPepper": "0x3921F7dB4B36886e8a452A25f9232D460E04c782",
+      "PowerPerp": "0xC95f2fE8aCB037f8E85fC0587FfCfDceDc7237Da"
     },
     "automations": {
       "SynthetixLimitOrders": {
