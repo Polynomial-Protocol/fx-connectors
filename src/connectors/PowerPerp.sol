@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
@@ -23,6 +25,8 @@ struct TradeParams {
 }
 
 interface ILiquidityPool {
+    function orderFee(int256 sizeDelta) external view returns (uint256);
+
     function queueDeposit(uint256 amount, address user) external;
     function queueWithdraw(uint256 amount, address user) external;
     function deposit(uint256 amount, address user) external;
@@ -30,20 +34,37 @@ interface ILiquidityPool {
 }
 
 interface IExchange {
+    function getMarkPrice() external view returns (uint256 markPrice, bool isInvalid);
+
     function openTrade(TradeParams memory tradeParams) external returns (uint256 positionId, uint256 totalCost);
 
     function closeTrade(TradeParams memory tradeParams) external returns (uint256 totalCost);
 }
 
+interface IShortToken {
+    struct ShortPosition {
+        uint256 positionId;
+        uint256 shortAmount;
+        uint256 collateralAmount;
+        address collateral;
+    }
+
+    function balanceOf(address owner) external view returns (uint256 balance);
+
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+    function shortPositions(uint256 positionId) external view returns (ShortPosition memory);
+}
+
 contract PowerPerpConnector is BaseConnector {
     using SafeTransferLib for ERC20;
+    using FixedPointMathLib for uint256;
 
     string public constant name = "Power-Perp-v1";
 
-    ERC20 public constant susd = ERC20(0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9);
+    ERC20 public constant susd = ERC20(0xeBaEAAD9236615542844adC5c149F86C36aD1136);
     ERC20 public immutable liquidityToken;
     ERC20 public immutable powerPerp;
-    ERC20 public immutable shortToken;
+    IShortToken public immutable shortToken;
 
     address immutable liquidityPool;
     address immutable exchange;
@@ -59,7 +80,7 @@ contract PowerPerpConnector is BaseConnector {
         exchange = _exchange;
         liquidityToken = ERC20(_liquidityToken);
         powerPerp = ERC20(_powerPerp);
-        shortToken = ERC20(_shortToken);
+        shortToken = IShortToken(_shortToken);
     }
 
     function initiateDeposit(uint256 amt, uint256 getId, uint256 setId)
@@ -121,6 +142,15 @@ contract PowerPerpConnector is BaseConnector {
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
+        if (tradeParams.isLong == true) {
+            (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
+            uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
+            uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
+            uint256 tradeCost = (usdAmount + fee) * 13 / 10;
+            susd.approve(liquidityPool, tradeCost);
+        } else {
+            ERC20(tradeParams.collateral).safeApprove(exchange, tradeParams.collateralAmount);
+        }
         (uint256 positionId, uint256 totalCost) = IExchange(exchange).openTrade(tradeParams);
         _eventName = "LogOpenTrade(TradeParams,uint256,uint256)";
         _eventParam = abi.encode(tradeParams, getId, setId);
@@ -136,6 +166,11 @@ contract PowerPerpConnector is BaseConnector {
             tradeParams.amount = _amt == type(uint256).max ? powerPerp.balanceOf(address(this)) : _amt;
         } else {
             tradeParams.amount = _amt == type(uint256).max ? shortToken.balanceOf(address(this)) : _amt;
+            (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
+            uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
+            uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
+            uint256 tradeCost = (usdAmount + fee) * 13 / 10;
+            susd.approve(liquidityPool, tradeCost);
         }
         uint256 totalCost = IExchange(exchange).closeTrade(tradeParams);
         setUint(setId, _amt);
