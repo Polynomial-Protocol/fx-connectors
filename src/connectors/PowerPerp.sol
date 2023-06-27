@@ -242,7 +242,7 @@ contract PowerPerpConnector is BaseConnector {
     }
 
     function processWithdraw(uint256 count) public {
-        ILiquidityPool(liquidityPool).processDeposits(count);
+        ILiquidityPool(liquidityPool).processWithdraws(count);
     }
 
     event LogInitiateDeposit(uint256 amt, uint256 getId, uint256 setId);
