@@ -17,11 +17,11 @@ contract DeployEmitter is Script {
 
         PolyEmitter emitter = new PolyEmitter();
 
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(emitter),
-            admin,
-            ""
-        );
+        // TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+        //     address(emitter),
+        //     admin,
+        //     ""
+        // );
 
         vm.stopBroadcast();
     }
