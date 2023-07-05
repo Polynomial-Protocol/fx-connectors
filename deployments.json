@@ -51,7 +51,7 @@
       "SynthetixPerp": "0x7cffc8ab44dfee537e0c837c1a5941e10b7f8673",
       "DragonFruit": "0xC33897fa2693D40A6Cad2B11c3e0792D305BBa92",
       "BellPepper": "0x3921F7dB4B36886e8a452A25f9232D460E04c782",
-      "PowerPerp": "0xf1d624784D9660f2Ea8f0cd27cDe2D5B99f52191"
+      "PowerPerp": "0xb1b8212a008dfc9140b8bfc7dbb65b701c4028b0"
     },
     "automations": {
       "SynthetixLimitOrders": {
