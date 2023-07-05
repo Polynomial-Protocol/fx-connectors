@@ -50,7 +50,7 @@
       "SynthetixPerp": "0x7cffc8ab44dfee537e0c837c1a5941e10b7f8673",
       "DragonFruit": "0xC33897fa2693D40A6Cad2B11c3e0792D305BBa92",
       "BellPepper": "0x3921F7dB4B36886e8a452A25f9232D460E04c782",
-      "PowerPerp": "0xF43A72834F84541ec56D015AF954eBEE1F3785ed"
+      "PowerPerp": "0xf1d624784D9660f2Ea8f0cd27cDe2D5B99f52191"
     },
     "automations": {
       "SynthetixLimitOrders": {
@@ -67,7 +67,7 @@
       "Synthetix-Perp-v1.4": "0x74338D0AA26F2319AA605f1D5AB5e3909D9AbA80",
       "Synthetix-Spot-v1": "0x2e2752231c54911a5cbf95cb7bDaE1ACFec65EB9",
       "Synthetix-Perp-Limit-Order-v1.1": "0x8B9aC170472C3DE6419DF8b2696BfEC21F4AeB8A",
-      "Power-Perp-v1": "0xA8A37415ad0aE3e3fF065C9D3847D5a0c33a3811"
+      "Power-Perp-v1": "0x3eCC29a2ffA43a423FCd0cfa7f819b5d9038Ced6"
     },
     "polynomialAuthority": "0x6F21e6b76Ec801d2a7377aEe9376315ee5425347",
     "utils": {
