@@ -34,11 +34,11 @@ contract DeployConnectors is Script {
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
 
-        address _liquidityToken = 0x4A1d965830AB0b9D14265Cb55BeAc2330e915885;
-        address _powerPerp = 0xD790bEF52346a36857E63490303417956364A2ef;
-        address _shortToken = 0x2fdB368781e66b5966d2fBb32dd6A52BE20923e8;
-        address _liquidityPool = 0x09e3125e3dB534a8A5fD82C0FDd5de20e5007b84;
-        address _exchange = 0x666598E957CB19bF0DF81F0E3B70782DED66fC81;
+        address _liquidityToken = 0xbF81F4744418ecE15453F81836a18A57F9B7C4E6;
+        address _powerPerp = 0xaBB46589dFa3E22C348157Ccc6bA9388885eBCA3;
+        address _shortToken = 0x8C70B8e7fC0Bbb7e208BaE8754cC696094735b76;
+        address _liquidityPool = 0xAFda86a47007949226C0eaC012A4E46a3108a3A6;
+        address _exchange = 0xF4F975EefEd5C7df71bcC33d99b8F6c920210262;
         PowerPerpConnector power = new PowerPerpConnector(
             _liquidityToken,
             _powerPerp,
