@@ -10,7 +10,8 @@ contract DeployPowerPerpResolver is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
-        new PowerPerpResolver(0xf80DC069cD185467495BfA9baB6A25f1eb810e1D);
+        address systemManager = 0x950829337ff723A5d75cC677121C6b08cbb63132;
+        new PowerPerpResolver(systemManager);
         vm.stopBroadcast();
     }
 }
