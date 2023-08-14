@@ -9,29 +9,15 @@ interface IPerpsV2Market {
 
     function withdrawAllMargin() external;
 
-    function modifyPosition(
-        int256 sizeDelta,
-        uint256 priceImpactDelta
-    ) external;
+    function modifyPosition(int256 sizeDelta, uint256 priceImpactDelta) external;
 
-    function modifyPositionWithTracking(
-        int256 sizeDelta,
-        uint256 priceImpactDelta,
-        bytes32 trackingCode
-    ) external;
+    function modifyPositionWithTracking(int256 sizeDelta, uint256 priceImpactDelta, bytes32 trackingCode) external;
 
     function closePosition(uint256 priceImpactDelta) external;
 
-    function closePositionWithTracking(
-        uint256 priceImpactDelta,
-        bytes32 trackingCode
-    ) external;
+    function closePositionWithTracking(uint256 priceImpactDelta, bytes32 trackingCode) external;
 
-    function submitDelayedOrder(
-        int256 sizeDelta,
-        uint256 priceImpactDelta,
-        uint256 desiredTimeDelta
-    ) external;
+    function submitDelayedOrder(int256 sizeDelta, uint256 priceImpactDelta, uint256 desiredTimeDelta) external;
 
     function submitDelayedOrderWithTracking(
         int256 sizeDelta,
@@ -44,42 +30,26 @@ interface IPerpsV2Market {
 
     function executeDelayedOrder(address account) external;
 
-    function submitOffchainDelayedOrder(
-        int256 sizeDelta,
-        uint256 priceImpactDelta
-    ) external;
+    function submitOffchainDelayedOrder(int256 sizeDelta, uint256 priceImpactDelta) external;
 
-    function submitOffchainDelayedOrderWithTracking(
-        int256 sizeDelta,
-        uint256 priceImpactDelta,
-        bytes32 trackingCode
-    ) external;
+    function submitOffchainDelayedOrderWithTracking(int256 sizeDelta, uint256 priceImpactDelta, bytes32 trackingCode)
+        external;
 
     function cancelOffchainDelayedOrder(address account) external;
 
-    function executeOffchainDelayedOrder(
-        address account,
-        bytes[] calldata priceUpdateData
-    ) external payable;
+    function executeOffchainDelayedOrder(address account, bytes[] calldata priceUpdateData) external payable;
 
     function assetPrice() external view returns (uint256 price, bool invalid);
 
     function baseAsset() external view returns (bytes32 key);
 
-    function remainingMargin(
-        address account
-    ) external view returns (uint256 marginRemaining, bool invalid);
+    function remainingMargin(address account) external view returns (uint256 marginRemaining, bool invalid);
 }
 
 interface ISynthetixConnector {
     function trade(address market, int256 sizeDelta, uint256 slippage) external;
 
-    function addMargin(
-        address market,
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    ) external;
+    function addMargin(address market, uint256 amt, uint256 getId, uint256 setId) external;
 }
 
 contract PlaceOrder is Script {
@@ -87,13 +57,9 @@ contract PlaceOrder is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        IPerpsV2Market perp = IPerpsV2Market(
-            0x111BAbcdd66b1B60A20152a2D3D06d36F8B5703c
-        );
+        IPerpsV2Market perp = IPerpsV2Market(0x111BAbcdd66b1B60A20152a2D3D06d36F8B5703c);
 
-        perp.cancelOffchainDelayedOrder(
-            0x09e3125e3dB534a8A5fD82C0FDd5de20e5007b84
-        );
+        perp.cancelOffchainDelayedOrder(0x09e3125e3dB534a8A5fD82C0FDd5de20e5007b84);
         // perp.transferMargin(50e18);
 
         // perp.submitOffchainDelayedOrderWithTracking(1e17, 1900e18, "KWENTA");

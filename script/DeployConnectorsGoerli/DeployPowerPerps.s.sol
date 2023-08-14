@@ -7,15 +7,9 @@ import {console2} from "forge-std/console2.sol";
 import {PowerPerpConnector} from "../../src/connectors/PowerPerp.sol";
 
 interface IConnectors {
-    function addConnectors(
-        string[] calldata _connectorNames,
-        address[] calldata _connectors
-    ) external;
+    function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
 
-    function updateConnectors(
-        string[] calldata _connectorNames,
-        address[] calldata _connectors
-    ) external;
+    function updateConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
 }
 
 contract DeployConnectors is Script {
@@ -27,9 +21,7 @@ contract DeployConnectors is Script {
         // IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
         // op goerli fx-wallet connectos address
-        IConnectors connectors = IConnectors(
-            0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
-        );
+        IConnectors connectors = IConnectors(0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2);
 
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);

@@ -41,18 +41,11 @@ interface ILiquidityPool {
 }
 
 interface IExchange {
-    function getMarkPrice()
-        external
-        view
-        returns (uint256 markPrice, bool isInvalid);
+    function getMarkPrice() external view returns (uint256 markPrice, bool isInvalid);
 
-    function openTrade(
-        TradeParams memory tradeParams
-    ) external returns (uint256 positionId, uint256 totalCost);
+    function openTrade(TradeParams memory tradeParams) external returns (uint256 positionId, uint256 totalCost);
 
-    function closeTrade(
-        TradeParams memory tradeParams
-    ) external returns (uint256 totalCost);
+    function closeTrade(TradeParams memory tradeParams) external returns (uint256 totalCost);
 }
 
 interface IShortToken {
@@ -67,9 +60,7 @@ interface IShortToken {
 
     function ownerOf(uint256 tokenId) external view returns (address owner);
 
-    function shortPositions(
-        uint256 positionId
-    ) external view returns (ShortPosition memory);
+    function shortPositions(uint256 positionId) external view returns (ShortPosition memory);
 }
 
 contract PowerPerpConnector is BaseConnector {
@@ -78,8 +69,7 @@ contract PowerPerpConnector is BaseConnector {
 
     string public constant name = "Power-Perp-v1";
 
-    ERC20 public constant susd =
-        ERC20(0xeBaEAAD9236615542844adC5c149F86C36aD1136);
+    ERC20 public constant susd = ERC20(0xeBaEAAD9236615542844adC5c149F86C36aD1136);
     ERC20 public immutable liquidityToken;
     ERC20 public immutable powerPerp;
     IShortToken public immutable shortToken;
@@ -101,11 +91,7 @@ contract PowerPerpConnector is BaseConnector {
         shortToken = IShortToken(_shortToken);
     }
 
-    function initiateDeposit(
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    )
+    function initiateDeposit(uint256 amt, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
@@ -119,30 +105,20 @@ contract PowerPerpConnector is BaseConnector {
         _eventParam = abi.encode(_amt, getId, setId);
     }
 
-    function initiateWithdraw(
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    )
+    function initiateWithdraw(uint256 amt, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
         uint256 _amt = getUint(getId, amt);
-        _amt = _amt == type(uint256).max
-            ? liquidityToken.balanceOf(address(this))
-            : _amt;
+        _amt = _amt == type(uint256).max ? liquidityToken.balanceOf(address(this)) : _amt;
         ILiquidityPool(liquidityPool).queueWithdraw(_amt, address(this));
         setUint(setId, _amt);
         _eventName = "LogInitiateWithdraw(uint256,uint256,uint256)";
         _eventParam = abi.encode(_amt, getId, setId);
     }
 
-    function deposit(
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    )
+    function deposit(uint256 amt, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
@@ -156,78 +132,51 @@ contract PowerPerpConnector is BaseConnector {
         _eventParam = abi.encode(_amt, getId, setId);
     }
 
-    function withdraw(
-        uint256 amt,
-        uint256 getId,
-        uint256 setId
-    )
+    function withdraw(uint256 amt, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
         uint256 _amt = getUint(getId, amt);
-        _amt = _amt == type(uint256).max
-            ? liquidityToken.balanceOf(address(this))
-            : _amt;
+        _amt = _amt == type(uint256).max ? liquidityToken.balanceOf(address(this)) : _amt;
         ILiquidityPool(liquidityPool).withdraw(_amt, address(this));
         setUint(setId, _amt);
         _eventName = "LogWithdraw(uint256,uint256,uint256)";
         _eventParam = abi.encode(_amt, getId, setId);
     }
 
-    function openTrade(
-        TradeParams memory tradeParams,
-        uint256 getId,
-        uint256 setId
-    )
+    function openTrade(TradeParams memory tradeParams, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
         if (tradeParams.isLong == true) {
-            (uint256 markPrice, ) = IExchange(exchange).getMarkPrice();
+            (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
             uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
-            uint256 fee = ILiquidityPool(liquidityPool).orderFee(
-                int256(tradeParams.amount)
-            );
+            uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
             uint256 tradeCost = ((usdAmount + fee) * 13) / 10;
             susd.approve(liquidityPool, tradeCost);
         } else {
-            ERC20(tradeParams.collateral).safeApprove(
-                exchange,
-                tradeParams.collateralAmount
-            );
+            ERC20(tradeParams.collateral).safeApprove(exchange, tradeParams.collateralAmount);
         }
-        (uint256 positionId, uint256 totalCost) = IExchange(exchange).openTrade(
-            tradeParams
-        );
+        (uint256 positionId, uint256 totalCost) = IExchange(exchange).openTrade(tradeParams);
         _eventName = "LogOpenTrade(TradeParams,uint256,uint256)";
         _eventParam = abi.encode(tradeParams, getId, setId);
     }
 
-    function closeTrade(
-        TradeParams memory tradeParams,
-        uint256 getId,
-        uint256 setId
-    )
+    function closeTrade(TradeParams memory tradeParams, uint256 getId, uint256 setId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
         uint256 _amt = getUint(getId, tradeParams.amount);
         if (tradeParams.isLong == true) {
-            tradeParams.amount = _amt == type(uint256).max
-                ? powerPerp.balanceOf(address(this))
-                : _amt;
+            tradeParams.amount = _amt == type(uint256).max ? powerPerp.balanceOf(address(this)) : _amt;
         } else {
-            tradeParams.amount = _amt == type(uint256).max
-                ? shortToken.balanceOf(address(this))
-                : _amt;
-            (uint256 markPrice, ) = IExchange(exchange).getMarkPrice();
+            tradeParams.amount = _amt == type(uint256).max ? shortToken.balanceOf(address(this)) : _amt;
+            (uint256 markPrice,) = IExchange(exchange).getMarkPrice();
             uint256 usdAmount = tradeParams.amount.mulWadDown(markPrice);
-            uint256 fee = ILiquidityPool(liquidityPool).orderFee(
-                int256(tradeParams.amount)
-            );
+            uint256 fee = ILiquidityPool(liquidityPool).orderFee(int256(tradeParams.amount));
             uint256 tradeCost = ((usdAmount + fee) * 13) / 10;
             susd.approve(liquidityPool, tradeCost);
         }
