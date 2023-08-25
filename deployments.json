@@ -68,7 +68,8 @@
       "Synthetix-Perp-v1.4": "0x74338D0AA26F2319AA605f1D5AB5e3909D9AbA80",
       "Synthetix-Spot-v1": "0x2e2752231c54911a5cbf95cb7bDaE1ACFec65EB9",
       "Synthetix-Perp-Limit-Order-v1.1": "0x8B9aC170472C3DE6419DF8b2696BfEC21F4AeB8A",
-      "Power-Perp-v1": "0xaD37BecBe6A22429eC1F9B2462700FB09e905206"
+      "Power-Perp-v1": "0xaD37BecBe6A22429eC1F9B2462700FB09e905206",
+      "Synthetix-Perp-v3-v1": "0x69f480d40e952c9288276c308914d75cc8321211"
     },
     "polynomialAuthority": "0x6F21e6b76Ec801d2a7377aEe9376315ee5425347",
     "utils": {
