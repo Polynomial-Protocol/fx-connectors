@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
 import {AaveConnector} from "../src/connectors/Aave.sol";
+import {SynthetixPerpV3Connector } from "../src/connectors/SynthetixPerpV3.sol";
 
 interface IConnectors {
     function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
@@ -18,21 +19,29 @@ contract DeployConnectors is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // mainnet fx-wallet connectors address
-        IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
+        // IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
         // op goerli fx-wallet connectos address
-        // IConnectors connectors = IConnectors(
-        //     0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
-        // );
+        IConnectors connectors = IConnectors(
+            0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
+        );
 
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
+        
+        address spotMarket = 0x5FF4b3aacdeC86782d8c757FAa638d8790799E83;
+        address perpMarket = 0xd78D47739Ed468a602beb11C34a2A20759bcEf4F;
 
-        AaveConnector aave = new AaveConnector();
-        names[0] = aave.name();
-        addrs[0] = address(aave);
+        SynthetixPerpV3Connector perps = new SynthetixPerpV3Connector(perpMarket, spotMarket);
+        names[0] = perps.name();
+        addrs[0] = address(perps);
 
-        connectors.updateConnectors(names, addrs);
+        // AaveConnector aave = new AaveConnector();
+        // names[0] = aave.name();
+        // addrs[0] = address(aave);
+
+        // connectors.updateConnectors(names, addrs);
+        connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }
