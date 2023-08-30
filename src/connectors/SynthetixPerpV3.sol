@@ -30,6 +30,11 @@ interface IPerpMarket {
     function commitOrder(OrderCommitmentRequest memory commitment) external;
 
     function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable;
+
+    function getOpenPosition(uint128 accountId, uint128 marketId)
+        external
+        view
+        returns (int256 totalPnl, int256 accruedFunding, int128 positionSize);
 }
 
 contract SynthetixPerpV3Connector is BaseConnector {
@@ -142,6 +147,23 @@ contract SynthetixPerpV3Connector is BaseConnector {
         _eventParam = abi.encode(accountId, marketId, size, acceptablePrice, getId, setId);
     }
 
+    function close(uint128 accountId, uint128 marketId, uint256 acceptablePrice)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        (,, int128 positionSize) = perpMarket.getOpenPosition(accountId, marketId);
+
+        IPerpMarket.OrderCommitmentRequest memory data = IPerpMarket.OrderCommitmentRequest(
+            marketId, accountId, -int128(positionSize), 0, acceptablePrice, "polynomial", address(0x0)
+        );
+
+        perpMarket.commitOrder(data);
+
+        _eventName = "LogClose(uint128,uint128,uint256)";
+        _eventParam = abi.encode(accountId, marketId, acceptablePrice);
+    }
+
     function commitTrade(uint128 accountId, uint128 marketId, int128 sizeDelta, uint256 acceptablePrice)
         public
         payable
@@ -176,5 +198,6 @@ contract SynthetixPerpV3Connector is BaseConnector {
     event LogLong(uint128, uint128, int128, uint256, uint256, uint256);
     event LogShort(uint128, uint128, int128, uint256, uint256, uint256);
     event LogCommitTrade(uint128, uint128, int128, uint256);
+    event LogClose(uint128, uint128, uint256);
     event LogSettleTrade(uint128, bytes);
 }
