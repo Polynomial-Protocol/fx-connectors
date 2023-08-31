@@ -40,8 +40,8 @@ contract DeployConnectors is Script {
         // names[0] = aave.name();
         // addrs[0] = address(aave);
 
-        // connectors.updateConnectors(names, addrs);
-        connectors.addConnectors(names, addrs);
+        connectors.updateConnectors(names, addrs);
+        // connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }
