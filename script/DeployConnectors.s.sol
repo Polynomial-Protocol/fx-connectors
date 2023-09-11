@@ -41,8 +41,8 @@ contract DeployConnectors is Script {
         addrs[0] = address(auth);
         addrs[1] = address(basic);
 
-        // connectors.updateConnectors(names, addrs);
         connectors.updateConnectors(names, addrs);
+        // connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }
