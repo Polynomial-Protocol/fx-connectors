@@ -12,7 +12,7 @@ interface IConnectors {
     function updateConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
 }
 
-contract DeployConnectors is Script {
+contract DeployConnectorsGoerli is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);

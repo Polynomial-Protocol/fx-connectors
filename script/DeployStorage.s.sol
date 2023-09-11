@@ -8,7 +8,7 @@ import {FxStorage} from "../src/utils/Storage.sol";
 
 contract DeployStorage is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_NEW");
         vm.startBroadcast(deployerPrivateKey);
         new FxStorage();
         vm.stopBroadcast();

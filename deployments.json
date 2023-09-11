@@ -74,6 +74,13 @@
     "polynomialAuthority": "0x6F21e6b76Ec801d2a7377aEe9376315ee5425347",
     "utils": {
       "emitter": "0x15eAFFAc55d9De5D763CC48e4fFBCaBbcfA9F0cc"
+    },
+    "base-goerli": {
+      "storage": "0xb788A9FFeE963f923B5edca163FE4a639bA06798",
+      "connectors": {
+        "Basic-v1": "0x9b974Bd0CFBBF0358b8Adf61Df4Bb608cEE28551",
+        "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21"
+      }
     }
   }
 }
