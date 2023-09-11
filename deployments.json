@@ -79,7 +79,8 @@
       "storage": "0xb788A9FFeE963f923B5edca163FE4a639bA06798",
       "connectors": {
         "Basic-v1": "0x9b974Bd0CFBBF0358b8Adf61Df4Bb608cEE28551",
-        "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21"
+        "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21",
+        "Synthetix-Perp-v3-v1": "0x05F2237E6A8273D1a0D019F1fbB2e9Fd669d9EAB"
       }
     }
   }

@@ -4,8 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {AuthConnector} from "../src/connectors/Auth.sol";
-import {BasicConnector} from "../src/connectors/Basic.sol";
+import {SynthetixPerpV3Connector} from "../src/connectors/SynthetixPerpV3.sol";
 
 interface IConnectors {
     function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;
@@ -29,20 +28,18 @@ contract DeployConnectors is Script {
         //     0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
         // );
 
-        string[] memory names = new string[](2);
-        address[] memory addrs = new address[](2);
-        
-        AuthConnector auth = new AuthConnector();
-        BasicConnector basic = new BasicConnector();
+        string[] memory names = new string[](1);
+        address[] memory addrs = new address[](1);
 
-        names[0] = auth.name();
-        names[1] = basic.name();
+        SynthetixPerpV3Connector snxV3 =
+        new SynthetixPerpV3Connector(0x9863Dae3f4b5F4Ffe3A841a21565d57F2BA10E87, 0x17633A63083dbd4941891F87Bdf31B896e91e2B9);
 
-        addrs[0] = address(auth);
-        addrs[1] = address(basic);
+        names[0] = snxV3.name();
 
-        connectors.updateConnectors(names, addrs);
-        // connectors.addConnectors(names, addrs);
+        addrs[0] = address(snxV3);
+
+        // connectors.updateConnectors(names, addrs);
+        connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }

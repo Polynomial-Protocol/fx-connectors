@@ -127,7 +127,7 @@ contract SynthetixLimitOrders is Initializable, AuthUpgradable, ReentrancyGuardU
             request.sizeDelta,
             request.priceImpactDelta,
             request.expiry
-            );
+        );
     }
 
     /// @notice Cancel a limit order request

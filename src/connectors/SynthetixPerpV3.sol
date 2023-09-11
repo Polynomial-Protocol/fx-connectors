@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
+import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
@@ -39,6 +40,7 @@ interface IPerpMarket {
 
 contract SynthetixPerpV3Connector is BaseConnector {
     using FixedPointMathLib for uint256;
+    using SafeTransferLib for ERC20;
 
     string public constant name = "Synthetix-Perp-v3-v1";
 
@@ -47,6 +49,8 @@ contract SynthetixPerpV3Connector is BaseConnector {
     IPerpMarket public immutable perpMarket;
 
     ISpotMarket public immutable spotMarket;
+
+    ERC20 public sUSD = ERC20(0x579c612E4Bf390f5504DB9f76b6F5759A3172279);
 
     constructor(address _perpMarket, address _spotMarket) {
         perpMarket = IPerpMarket(_perpMarket);
@@ -66,7 +70,13 @@ contract SynthetixPerpV3Connector is BaseConnector {
         returns (string memory _eventName, bytes memory _eventParam)
     {
         uint256 _amt = getUint(getId, amount);
-        _amt = _amt == type(uint256).max ? spotMarket.getSynth(synthMarketId).balanceOf(address(this)) : _amt;
+        if (synthMarketId == 0) {
+            _amt = _amt == type(uint256).max ? sUSD.balanceOf(address(this)) : _amt;
+        } else {
+            ERC20 synth = spotMarket.getSynth(synthMarketId);
+            _amt = _amt == type(uint256).max ? synth.balanceOf(address(this)) : _amt;
+            synth.safeApprove(address(perpMarket), _amt);
+        }
 
         perpMarket.modifyCollateral(accountId, synthMarketId, int256(_amt));
 
@@ -97,6 +107,10 @@ contract SynthetixPerpV3Connector is BaseConnector {
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
+        if (synthMarketId != 0 && amount > 0) {
+            ERC20 synth = spotMarket.getSynth(synthMarketId);
+            synth.safeApprove(address(perpMarket), uint256(amount));
+        }
         perpMarket.modifyCollateral(accountId, synthMarketId, amount);
 
         _eventName = "LogModifyCollateral(uint128,uint128,int256)";
