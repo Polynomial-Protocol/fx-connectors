@@ -32,14 +32,14 @@ contract DeployConnectors is Script {
         address[] memory addrs = new address[](1);
 
         SynthetixPerpV3Connector snxV3 =
-        new SynthetixPerpV3Connector(0x9863Dae3f4b5F4Ffe3A841a21565d57F2BA10E87, 0x17633A63083dbd4941891F87Bdf31B896e91e2B9);
+        new SynthetixPerpV3Connector(0xf272382cB3BE898A8CdB1A23BE056fA2Fcf4513b, 0x5FF4b3aacdeC86782d8c757FAa638d8790799E83, 0xe487Ad4291019b33e2230F8E2FB1fb6490325260);
 
         names[0] = snxV3.name();
 
         addrs[0] = address(snxV3);
 
         // connectors.updateConnectors(names, addrs);
-        connectors.addConnectors(names, addrs);
+        connectors.updateConnectors(names, addrs);
 
         vm.stopBroadcast();
     }

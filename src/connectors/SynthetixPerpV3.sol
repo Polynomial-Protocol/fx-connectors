@@ -50,11 +50,12 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
     ISpotMarket public immutable spotMarket;
 
-    ERC20 public sUSD = ERC20(0x579c612E4Bf390f5504DB9f76b6F5759A3172279);
+    ERC20 public immutable sUSD;
 
-    constructor(address _perpMarket, address _spotMarket) {
+    constructor(address _perpMarket, address _spotMarket, address _susd) {
         perpMarket = IPerpMarket(_perpMarket);
         spotMarket = ISpotMarket(_spotMarket);
+        sUSD = ERC20(_susd);
     }
 
     function createAccount(uint128 id) public payable returns (string memory _eventName, bytes memory _eventParam) {
