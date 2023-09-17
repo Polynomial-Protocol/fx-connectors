@@ -14,19 +14,19 @@ interface IConnectors {
 
 contract DeployConnectors is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_NEW");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         // mainnet fx-wallet connectors address
         // IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
         // base goerli fx-wallet connectors address
-        IConnectors connectors = IConnectors(0x95325058C51Acc796E35F3D0309Ff098c4f818F1);
+        // IConnectors connectors = IConnectors(0x95325058C51Acc796E35F3D0309Ff098c4f818F1);
 
         // // op goerli fx-wallet connectos address
-        // IConnectors connectors = IConnectors(
-        //     0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
-        // );
+        IConnectors connectors = IConnectors(
+            0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
+        );
 
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
