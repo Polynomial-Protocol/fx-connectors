@@ -51,7 +51,8 @@
       "SynthetixPerp": "0x7cffc8ab44dfee537e0c837c1a5941e10b7f8673",
       "DragonFruit": "0xC33897fa2693D40A6Cad2B11c3e0792D305BBa92",
       "BellPepper": "0x3921F7dB4B36886e8a452A25f9232D460E04c782",
-      "PowerPerp": "0x53252EdEB1F491C65C7C8f86625dB1215a338aED"
+      "PowerPerp": "0x53252EdEB1F491C65C7C8f86625dB1215a338aED",
+      "SynthetixPerpAccounts": "0xc4771d0cB6bA1019932b81635980173d948C4f69"
     },
     "automations": {
       "SynthetixLimitOrders": {
@@ -77,6 +78,9 @@
     },
     "base-goerli": {
       "storage": "0xb788A9FFeE963f923B5edca163FE4a639bA06798",
+      "resolvers": {
+        "SynthetixPerpAccounts": "0x4BD7fD33351E0970D333Ff6C3566E8ED3380F42F"
+      },
       "connectors": {
         "Basic-v1": "0x9b974Bd0CFBBF0358b8Adf61Df4Bb608cEE28551",
         "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21",
