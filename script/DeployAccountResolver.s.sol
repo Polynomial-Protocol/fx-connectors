@@ -8,9 +8,9 @@ import {AccountResolver} from "../src/resolvers/Accounts.sol";
 
 contract DeployResolver is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_NEW");
         vm.startBroadcast(deployerPrivateKey);
-        new AccountResolver(0xC7a069dD24178DF00914d49Bf674A40A1420CF01);
+        new AccountResolver(0xe7FcA4a9cCC5DE4917C98277e7BeE81782a5Cd01);
         vm.stopBroadcast();
     }
 }

@@ -79,6 +79,7 @@
     "base-goerli": {
       "storage": "0xb788A9FFeE963f923B5edca163FE4a639bA06798",
       "resolvers": {
+        "Accounts": "0xa136Cc17CCBA4889aECE754cf884D5eECEE5c502",
         "SynthetixPerpAccounts": "0x4BD7fD33351E0970D333Ff6C3566E8ED3380F42F"
       },
       "connectors": {
