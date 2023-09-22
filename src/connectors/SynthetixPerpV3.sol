@@ -70,15 +70,17 @@ contract SynthetixPerpV3Connector is BaseConnector {
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
+        ERC20 synth;
         uint256 _amt = getUint(getId, amount);
         if (synthMarketId == 0) {
+            synth = sUSD;
             _amt = _amt == type(uint256).max ? sUSD.balanceOf(address(this)) : _amt;
         } else {
-            ERC20 synth = spotMarket.getSynth(synthMarketId);
+            synth = spotMarket.getSynth(synthMarketId);
             _amt = _amt == type(uint256).max ? synth.balanceOf(address(this)) : _amt;
-            synth.safeApprove(address(perpMarket), _amt);
         }
 
+        synth.safeApprove(address(perpMarket), _amt);
         perpMarket.modifyCollateral(accountId, synthMarketId, int256(_amt));
 
         setUint(setId, _amt);

@@ -14,25 +14,25 @@ interface IConnectors {
 
 contract DeployConnectors is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_NEW");
         vm.startBroadcast(deployerPrivateKey);
 
         // mainnet fx-wallet connectors address
         // IConnectors connectors = IConnectors(0x436C89f77F6B6fbFE14d97cd9244e385FaE94FeA);
 
         // base goerli fx-wallet connectors address
-        // IConnectors connectors = IConnectors(0x95325058C51Acc796E35F3D0309Ff098c4f818F1);
+        IConnectors connectors = IConnectors(0x95325058C51Acc796E35F3D0309Ff098c4f818F1);
 
         // // op goerli fx-wallet connectos address
-        IConnectors connectors = IConnectors(
-            0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
-        );
+        // IConnectors connectors = IConnectors(
+        //     0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2
+        // );
 
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
 
         SynthetixPerpV3Connector snxV3 =
-        new SynthetixPerpV3Connector(0xf272382cB3BE898A8CdB1A23BE056fA2Fcf4513b, 0x5FF4b3aacdeC86782d8c757FAa638d8790799E83, 0xe487Ad4291019b33e2230F8E2FB1fb6490325260);
+        new SynthetixPerpV3Connector(0x9863Dae3f4b5F4Ffe3A841a21565d57F2BA10E87, 0x17633A63083dbd4941891F87Bdf31B896e91e2B9, 0x579c612E4Bf390f5504DB9f76b6F5759A3172279);
 
         names[0] = snxV3.name();
 
