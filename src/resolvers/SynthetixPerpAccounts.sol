@@ -7,7 +7,6 @@ interface IERC721 {
 }
 
 contract SynthetixPerpAccountsResolver {
-
     IERC721 public immutable snxPerpAccount;
 
     constructor(address _snxPerpAccount) {
@@ -22,7 +21,7 @@ contract SynthetixPerpAccountsResolver {
             ids[0] = 0;
         } else {
             ids = new uint256[](balance);
-            for (uint i = 0; i < balance; i++) {
+            for (uint256 i = 0; i < balance; i++) {
                 ids[i] = snxPerpAccount.tokenOfOwnerByIndex(owner, i);
             }
         }

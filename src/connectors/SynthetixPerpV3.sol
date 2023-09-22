@@ -38,6 +38,10 @@ interface IPerpMarket {
         returns (int256 totalPnl, int256 accruedFunding, int128 positionSize);
 }
 
+interface IPythNode {
+    function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
+}
+
 contract SynthetixPerpV3Connector is BaseConnector {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
@@ -52,10 +56,24 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
     ERC20 public immutable sUSD;
 
-    constructor(address _perpMarket, address _spotMarket, address _susd) {
+    IPythNode public immutable pythNode;
+
+    constructor(address _perpMarket, address _spotMarket, address _susd, address _pythNode) {
         perpMarket = IPerpMarket(_perpMarket);
         spotMarket = ISpotMarket(_spotMarket);
         sUSD = ERC20(_susd);
+        pythNode = IPythNode(_pythNode);
+    }
+
+    function updateOracle(bytes memory oracleData)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        pythNode.fulfillOracleQuery{value: msg.value}(oracleData);
+
+        _eventName = "LogUpdateOracle(bytes)";
+        _eventParam = abi.encode(oracleData);
     }
 
     function createAccount(uint128 id) public payable returns (string memory _eventName, bytes memory _eventParam) {
@@ -209,6 +227,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
         _eventParam = abi.encode(accountId, updateData);
     }
 
+    event LogUpdateOracle(bytes);
     event LogAddCollateral(uint128, uint128, uint256, uint256, uint256);
     event LogRemoveCollateral(uint128, uint128, uint256, uint256, uint256);
     event LogModifyCollateral(uint128, uint128, int256);
