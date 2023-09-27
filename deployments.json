@@ -85,7 +85,7 @@
       "connectors": {
         "Basic-v1": "0x9b974Bd0CFBBF0358b8Adf61Df4Bb608cEE28551",
         "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21",
-        "Synthetix-Perp-v3-v1": "0xAFbfEeab439aB207851E50f0071870fde1Ce76Db"
+        "Synthetix-Perp-v3-v1": "0x2B2fBB539cBC2E0D07A0BFB72450224A15360527"
       }
     }
   }
