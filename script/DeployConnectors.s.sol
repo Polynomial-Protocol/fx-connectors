@@ -39,7 +39,7 @@ contract DeployConnectors is Script {
         addrs[0] = address(snxV3);
 
         // connectors.updateConnectors(names, addrs);
-        connectors.updateConnectors(names, addrs);
+        connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }
