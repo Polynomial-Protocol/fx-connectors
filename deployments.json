@@ -75,19 +75,19 @@
     "polynomialAuthority": "0x6F21e6b76Ec801d2a7377aEe9376315ee5425347",
     "utils": {
       "emitter": "0x15eAFFAc55d9De5D763CC48e4fFBCaBbcfA9F0cc"
+    }
+  },
+  "base-goerli": {
+    "storage": "0xb788A9FFeE963f923B5edca163FE4a639bA06798",
+    "resolvers": {
+      "Accounts": "0xa136Cc17CCBA4889aECE754cf884D5eECEE5c502",
+      "SynthetixPerpAccounts": "0x4BD7fD33351E0970D333Ff6C3566E8ED3380F42F"
     },
-    "base-goerli": {
-      "storage": "0xb788A9FFeE963f923B5edca163FE4a639bA06798",
-      "resolvers": {
-        "Accounts": "0xa136Cc17CCBA4889aECE754cf884D5eECEE5c502",
-        "SynthetixPerpAccounts": "0x4BD7fD33351E0970D333Ff6C3566E8ED3380F42F"
-      },
-      "connectors": {
-        "Basic-v1": "0x9b974Bd0CFBBF0358b8Adf61Df4Bb608cEE28551",
-        "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21",
-        "Synthetix-Perp-v3-v1": "0x2B2fBB539cBC2E0D07A0BFB72450224A15360527",
-        "Synthetix-Spot-v3-v1": "0x14DD641e185dD6797f38e72005036d99f4d1Ed93"
-      }
+    "connectors": {
+      "Basic-v1": "0x9b974Bd0CFBBF0358b8Adf61Df4Bb608cEE28551",
+      "Auth-v1": "0x99cE713572D08DC89Ba9e9704a99664843a46e21",
+      "Synthetix-Perp-v3-v1": "0x2F6334C4aB99F1e022B6230A78Be8FeA529807bb",
+      "Synthetix-Spot-v3-v1": "0x14DD641e185dD6797f38e72005036d99f4d1Ed93"
     }
   }
 }
