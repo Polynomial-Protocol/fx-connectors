@@ -162,9 +162,11 @@ contract SynthetixSpotV3Connector is BaseConnector {
         _eventName = "LogWrapUSDC(uint128,uint256)";
         _eventParam = abi.encode(marketId, _wrapAmount);
     }
+
     
     function unwrapUSDC(uint128 marketId, uint256 unwrapAmount, uint256 getId, uint256 setId) 
         public 
+        payable
         returns (string memory _eventName, bytes memory _eventParam )
     {
         uint256 _unwrapAmount = getUint(getId, unwrapAmount);
@@ -175,14 +177,15 @@ contract SynthetixSpotV3Connector is BaseConnector {
 
         sUSD.safeApprove(address(spotMarket), _unwrapAmount);
         
-        spotMarket.buy(marketId, _unwrapAmount, _unwrapAmount, referrer);
+        (uint256 synthAmount, ) = spotMarket.buy(marketId, _unwrapAmount, _unwrapAmount, referrer);
         
-        (uint256 returnCollateralAmount, ) = spotMarket.unwrap(marketId, _unwrapAmount, _unwrapAmount);
+        (uint256 returnCollateralAmount, ) = spotMarket.unwrap(marketId, synthAmount, synthAmount);
         
         setUint(setId, returnCollateralAmount);
+        setUint(setId, 0);
 
         _eventName = "LogUnWrapUSDC(uint128,uint256)";
-        _eventParam = abi.encode(marketId, _unwrapAmount);
+        _eventParam = abi.encode(marketId, unwrapAmount);
     }
 
     event LogBuy(uint128 marketId, uint256 usdAmount, uint256 minAmountReceived, uint256 getId, uint256 setId);
