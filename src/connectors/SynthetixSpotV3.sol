@@ -40,6 +40,15 @@ interface ISpotMarket {
     function sellExactOut(uint128 marketId, uint256 usdAmount, uint256 maxSynthAmount, address referrer)
         external
         returns (uint256 synthToBurn, OrderFees memory fees);
+
+    function wrap( uint128 marketId, uint256 wrapAmount, uint256 minAmountReceived) 
+        external 
+        returns (uint256 amountToMint, OrderFees memory fees);
+        
+    function unwrap( uint128 marketId, uint256 unwrapAmount, uint256 minAmountReceived) 
+        external 
+        returns (uint256 returnCollateralAmount, OrderFees memory fees);
+
 }
 
 contract SynthetixSpotV3Connector is BaseConnector {
@@ -55,10 +64,13 @@ contract SynthetixSpotV3Connector is BaseConnector {
     ISpotMarket public immutable spotMarket;
 
     ERC20 public immutable sUSD;
+    
+    ERC20 public immutable USDC;
 
-    constructor(address _spotMarket, address _susd) {
+    constructor(address _spotMarket, address _susd, address _usdc) {
         spotMarket = ISpotMarket(_spotMarket);
         sUSD = ERC20(_susd);
+        USDC = ERC20(_usdc);
     }
 
     function buy(uint128 marketId, uint256 usdAmount, uint256 minAmountReceived, uint256 getId, uint256 setId)
@@ -127,9 +139,59 @@ contract SynthetixSpotV3Connector is BaseConnector {
         _eventName = "LogSellExactOut(uint128,uint256,uint256)";
         _eventParam = abi.encode(marketId, usdAmount, maxSynthAmount);
     }
+    
+    function wrapUSDC(uint128 marketId, uint256 wrapAmount, uint256 getId, uint256 setId) 
+        public 
+        payable 
+        returns (string memory _eventName, bytes memory _eventParam ) 
+    {
+        uint256 _wrapAmount = getUint(getId, wrapAmount);
+
+        if(_wrapAmount == type(uint256).max) {
+            _wrapAmount = USDC.balanceOf(address(this));
+        }
+        
+        USDC.safeApprove(address(spotMarket), _wrapAmount);
+        
+        spotMarket.wrap(marketId, _wrapAmount, _wrapAmount);
+        
+        (uint256 usdAmountReceived, ) = spotMarket.sell(marketId, _wrapAmount, _wrapAmount, referrer);
+        
+        setUint(setId, usdAmountReceived);
+
+        _eventName = "LogWrapUSDC(uint128,uint256)";
+        _eventParam = abi.encode(marketId, _wrapAmount);
+    }
+
+    
+    function unwrapUSDC(uint128 marketId, uint256 unwrapAmount, uint256 getId, uint256 setId) 
+        public 
+        payable
+        returns (string memory _eventName, bytes memory _eventParam )
+    {
+        uint256 _unwrapAmount = getUint(getId, unwrapAmount);
+
+        if(_unwrapAmount == type(uint256).max) {
+            _unwrapAmount = sUSD.balanceOf(address(this));
+        }
+
+        sUSD.safeApprove(address(spotMarket), _unwrapAmount);
+        
+        (uint256 synthAmount, ) = spotMarket.buy(marketId, _unwrapAmount, _unwrapAmount, referrer);
+        
+        (uint256 returnCollateralAmount, ) = spotMarket.unwrap(marketId, synthAmount, synthAmount);
+        
+        setUint(setId, returnCollateralAmount);
+        setUint(setId, 0);
+
+        _eventName = "LogUnWrapUSDC(uint128,uint256)";
+        _eventParam = abi.encode(marketId, unwrapAmount);
+    }
 
     event LogBuy(uint128 marketId, uint256 usdAmount, uint256 minAmountReceived, uint256 getId, uint256 setId);
     event LogBuyExactOut(uint128 marketId, uint256 synthAmount, uint256 maxUsdAmount);
     event LogSell(uint128 marketId, uint256 synthAmount, uint256 minUsdAmount, uint256 getId, uint256 setId);
     event LogSellExactOut(uint128 marketId, uint256 usdAmount, uint256 maxSynthAmount);
+    event LogWrapUSDC(uint128 marketId, uint256 wrapAmount);
+    event LogUnWrapUSDC(uint128 marketId, uint256 unwrapAmount);
 }
