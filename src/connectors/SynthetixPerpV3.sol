@@ -46,7 +46,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
-    string public constant name = "Synthetix-Perp-v3-v1.1";
+    string public constant name = "Synthetix-Perp-v3-v1.2";
 
     uint256 public constant WAD = 1e18;
 
