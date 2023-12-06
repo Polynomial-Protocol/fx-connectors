@@ -12,10 +12,10 @@ contract UpdatePythOracleIds is Script {
 
         SynthetixLimitOrders target = SynthetixLimitOrders(payable(0x7634E43aA3f446C8d9D5014d609355F728361075));
 
-        address[] memory markets = new address[](69);
-        bytes32[] memory ids = new bytes32[](69);
+        address[] memory markets = new address[](78);
+        bytes32[] memory ids = new bytes32[](78);
 
-        address[69] memory _markets = [
+        address[78] memory _markets = [
             0x2B3bb4c683BFc5239B029131EEf3B1d214478d93, // ETH
             0x59b007E9ea8F89b069c43F8f45834d30853e3699, // BTC
             0x509072A5aE4a87AC89Fc8D64D94aDCb44Bd4b88e, // ARB
@@ -84,10 +84,19 @@ contract UpdatePythOracleIds is Script {
             0x91cc4a83d026e5171525aFCAEd020123A653c2C9, // RNDR
             0xb815Eb8D3a9dA3EdDD926225c0FBD3A566e8C749, // UMA
             0x76BB1Edf0C55eC68f4C8C7fb3C076b811b1a9b9f, // ZRX
-            0x08388dC122A956887c2F736Aaec4A0Ce6f0536Ce // STETHETH
+            0x08388dC122A956887c2F736Aaec4A0Ce6f0536Ce, // STETHETH
+            0x35B0ed8473e7943d31Ee1eeeAd06C8767034Ce39, // TIA
+            0xB3422e49dB926f7C5F5d7DaF5F1069Abf1b7E894, // BONK
+            0x296286ae0b5c066CBcFe46cc4Ffb375bCCAFE640, // PYTH
+            0xBBd74c2c8c89D45B822e08fCe400F4DDE99e600b, // IMX
+            0xbdb26bfb6A229d7f254FAf1B2c744887ec5F1f31, // TRB
+            0x48BeadAB5781aF9C4Fec27AC6c8E0F402F2Cc3D6, // MEME
+            0x90c9B9D7399323FfFe63819788EeD7Cde1e6A78C, // ANKR
+            0x4272b356e7E406Eeef15E47692f7f4dE86370634, // FET
+            0x3f957DF3AB99ff502eE09071dd353bf4352BBEfE // GRT
         ];
 
-        bytes32[69] memory _ids = [
+        bytes32[78] memory _ids = [
             bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace), // ETH
             bytes32(0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43), // BTC
             bytes32(0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5), // ARB
@@ -156,10 +165,19 @@ contract UpdatePythOracleIds is Script {
             bytes32(0xab7347771135fc733f8f38db462ba085ed3309955f42554a14fa13e855ac0e2f), // RNDR
             bytes32(0x4b78d251770732f6304b1f41e9bebaabc3b256985ef18988f6de8d6562dd254c), // UMA
             bytes32(0x7d17b9fe4ea7103be16b6836984fabbc889386d700ca5e5b3d34b7f92e449268), // ZRX
-            bytes32(0x3af6a3098c56f58ff47cc46dee4a5b1910e5c157f7f0b665952445867470d61f) // STETHETH
+            bytes32(0x3af6a3098c56f58ff47cc46dee4a5b1910e5c157f7f0b665952445867470d61f), // STETHETH
+            bytes32(0x09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723), // TIA
+            bytes32(0x72b021217ca3fe68922a19aaf990109cb9d84e9ad004b4d2025ad6f529314419), // BONK
+            bytes32(0x0bbf28e9a841a1cc788f6a361b17ca072d0ea3098a1e5df1c3922d06719579ff), // PYTH
+            bytes32(0x941320a8989414874de5aa2fc340a75d5ed91fdff1613dd55f83844d52ea63a2), // IMX
+            bytes32(0xddcd037c2de8dbf2a0f6eebf1c039924baf7ebf0e7eb3b44bf421af69cc1b06d), // TRB
+            bytes32(0xcd2cee36951a571e035db0dfad138e6ecdb06b517cc3373cd7db5d3609b7927c), // MEME
+            bytes32(0x89a58e1cab821118133d6831f5018fba5b354afb78b2d18f575b3cbf69a4f652), // ANKR
+            bytes32(0xb98e7ae8af2d298d2651eb21ab5b8b5738212e13efb43bd0dfbce7a74ba4b5d0), // FET
+            bytes32(0x4d1f8dae0d96236fb98e8f47471a366ec3b1732b47041781934ca3a9bb2f35e7) // GRT
         ];
 
-        for (uint256 i = 0; i < 69; i++) {
+        for (uint256 i = 0; i < 78; i++) {
             markets[i] = _markets[i];
             ids[i] = _ids[i];
         }
