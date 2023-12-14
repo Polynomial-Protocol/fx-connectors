@@ -5,51 +5,46 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
-interface IEmitter {
-    function emitSwap(address from, address to, uint256 amt, uint256 minReceived, uint256 received) external;
-}
-
 interface IExclusiveImpl {
     function enableAdditionalAuth(address _user, uint256 _expiry) external;
-        
+
     function disableAdditionalAuth(address user) external;
 }
 
 interface IDefaultImpl {
     function toggleBeta() external;
 
-    function isBeta() external returns(bool);
+    function isBeta() external returns (bool);
 }
 
 contract OneClickTrading is BaseConnector {
     using SafeTransferLib for ERC20;
 
-    struct Data {
-        uint256 msgValue;
-        uint256 initialBal;
-        uint256 finalBal;
-        ERC20 toToken;
+    string public constant name = "One-Click-Trading-v1";
+
+    function enableAuth(address _user, uint256 _expiry)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        IExclusiveImpl(address(this)).enableAdditionalAuth(_user, _expiry);
+        _eventName = "LogEnableAuth(address,uint256)";
+        _eventParam = abi.encode(_user, _expiry);
     }
 
-    string public constant name = "One-Click-Trading-v1";
-    
-    function enableAuth(address _user, uint256 _expiry) public payable {
-        IExclusiveImpl(address(this)).enableAdditionalAuth(_user, _expiry);
-    }
-    
-    function disableAuth(address _user) public payable {
+    function disableAuth(address _user) public payable returns (string memory _eventName, bytes memory _eventParam) {
         IExclusiveImpl(address(this)).disableAdditionalAuth(_user);
+        _eventName = "LogDisableAuth(address)";
+        _eventParam = abi.encode(_user);
     }
-    
-    function toggleBeta() public payable {
+
+    function toggleBeta() public payable returns (string memory _eventName, bytes memory _eventParam){
         IDefaultImpl(address(this)).toggleBeta();
+        _eventName = "LogToggleBeta(address,bool)";
+        _eventParam = abi.encode(address(this), IDefaultImpl(address(this)).isBeta());
     }
-    
-    function isBeta() public payable returns (bool){
-        return IDefaultImpl(address(this)).isBeta();
-    }
-    
-    event LogSwap(
-        address indexed from, address indexed to, uint256 amt, uint256 minReceived, bytes data, uint256 setId
-    );
+
+    event LogEnableAuth(address indexed _user, uint256 _expiry);
+    event LogDisableAuth(address indexed _user);
+    event LogToggleBeta(address indexed _address, bool _betaStatus);
 }
