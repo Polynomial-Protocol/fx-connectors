@@ -38,7 +38,7 @@ contract OneClickTrading is BaseConnector {
         _eventParam = abi.encode(_user);
     }
 
-    function toggleBeta() public payable returns (string memory _eventName, bytes memory _eventParam){
+    function toggleBeta() public payable returns (string memory _eventName, bytes memory _eventParam) {
         IDefaultImpl(address(this)).toggleBeta();
         _eventName = "LogToggleBeta(address,bool)";
         _eventParam = abi.encode(address(this), IDefaultImpl(address(this)).isBeta());
