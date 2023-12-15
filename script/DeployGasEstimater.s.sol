@@ -19,11 +19,7 @@ contract DeployGasEstimater is Script {
 
         GasEstimater estimater = new GasEstimater();
 
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(estimater),
-            admin,
-            data
-        );
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(estimater), admin, data);
 
         vm.stopBroadcast();
     }

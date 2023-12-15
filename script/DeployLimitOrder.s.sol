@@ -21,11 +21,7 @@ contract DeployLimitOrder is Script {
             2000000000000000000,
             300000000000000
         );
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(limitOrder),
-            admin,
-            data
-        );
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(limitOrder), admin, data);
 
         console2.log(address(limitOrder));
         console2.logBytes(data);
