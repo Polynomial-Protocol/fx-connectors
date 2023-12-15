@@ -6,7 +6,9 @@ libs = ['lib']
 [rpc_endpoints]
 goerli_optimism = "${GOERLI_OPTIMISM_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
+base = "${BASE_RPC_URL}"
 
 [etherscan]
 goerli_optimism = { key = "${ETHERSCAN_API_KEY}" }
 optimism = { key = "${ETHERSCAN_API_KEY}" }
+base = { key = "${ETHERSCAN_API_KEY_BASE}" }
