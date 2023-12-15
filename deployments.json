@@ -45,6 +45,16 @@
       "gasEstimater": "0x3A3482992A37cdf2015FF6EFB90504911d3DFB38"
     }
   },
+  "base": {
+    "storage": "0xBD9fB031dAC8FC48e7eB701DDEC90Cc194d5F4Db",
+    "connectors": {
+      "Auth-v1": "0x9ed8932C266D46535123934c80c9E69fE214FABd",
+      "Basic-v1": "0x1D7D81A928554467f25531CF056A42C1B2603F1E"
+    },
+    "resolvers": {
+      "Accounts": "0x6E91d2a6450DA9739A10194B13ea2c0e6080eb6C"
+    }
+  },
   "optimism-goerli": {
     "resolvers": {
       "Accounts": "0xc298ea7c997ca3efa192291df17301c0ee52bcce",
