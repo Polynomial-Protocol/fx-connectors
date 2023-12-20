@@ -33,13 +33,19 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         address verifyingContract;
     }
 
-    struct OrderRequest {
-        address user;
+    struct PriceRange {
         uint256 priceA;
         uint256 priceB;
+        uint256 acceptablePrice;
+    }
+
+    struct OrderRequest {
+        address user;
+        PriceRange price;
+        PriceRange tpPrice;
+        PriceRange slPrice;
         uint128 accountId;
         uint128 marketId;
-        uint256 acceptablePrice;
         int128 size;
         uint128 expiry;
     }
@@ -47,8 +53,11 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     bytes32 constant EIP712DOMAIN_TYPEHASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
-    bytes32 constant ORDERREQUEST_TYPEHASH = keccak256(
-        "OrderRequest(address user,uint256 priceA,uint256 priceB,uint128 accountId,uint128 marketId,uint256 acceptablePrice,int128 size,uint128 expiry)"
+    bytes32 constant PRICE_RANGE_TYPEHASH =
+        keccak256("PriceRange(uint256 priceA,uint256 priceB,uint256 acceptablePrice)");
+
+    bytes32 constant ORDER_REQUEST_TYPEHASH = keccak256(
+        "OrderRequest(address user,PriceRange price,PriceRange tpPrice,PriceRange slPrice,uint128 accountId,uint128 marketId,int128 size,uint128 expiry)"
     );
 
     /// -----------------------------------------------------------------------
@@ -129,15 +138,24 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param _sig Signature
      */
     function getSigner(OrderRequest memory _req, bytes memory _sig) internal view returns (address) {
+        bytes32 priceHash = keccak256(
+            abi.encode(PRICE_RANGE_TYPEHASH, _req.price.priceA, _req.price.priceB, _req.price.acceptablePrice)
+        );
+        bytes32 tpPriceHash = keccak256(
+            abi.encode(PRICE_RANGE_TYPEHASH, _req.tpPrice.priceA, _req.tpPrice.priceB, _req.tpPrice.acceptablePrice)
+        );
+        bytes32 slPriceHash = keccak256(
+            abi.encode(PRICE_RANGE_TYPEHASH, _req.slPrice.priceA, _req.slPrice.priceB, _req.slPrice.acceptablePrice)
+        );
         bytes32 reqHash = keccak256(
             abi.encode(
-                ORDERREQUEST_TYPEHASH,
+                ORDER_REQUEST_TYPEHASH,
                 _req.user,
-                _req.priceA,
-                _req.priceB,
+                priceHash,
+                tpPriceHash,
+                slPriceHash,
                 _req.accountId,
                 _req.marketId,
-                _req.acceptablePrice,
                 _req.size,
                 _req.expiry
             )
