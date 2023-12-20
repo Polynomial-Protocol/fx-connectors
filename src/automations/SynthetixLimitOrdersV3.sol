@@ -76,6 +76,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// @notice Storage gap
     uint256[50] private _gap;
 
+    /// @notice Orders
+    mapping(uint256 => OrderRequest) orders;
+
     /// @notice Initializer
     function initialize(address _list) public initializer {
         DOMAIN_SEPARATOR = keccak256(
@@ -91,7 +94,64 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         list = IList(_list);
     }
 
-    function executeOrder(OrderRequest memory req, bytes memory sig) public nonReentrant {
+    /**
+     * @notice Place the order on-chain
+     * @param req Order request
+     */
+    function placeOrder(OrderRequest memory req) external nonReentrant onlyScw {
+        orders[nextOrderId++] = req;
+    }
+
+    /**
+     * @notice Execute main limit order
+     * @param req Order request
+     * @param sig User signed message of the request
+     */
+    function executeOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
+        _placeOrder(req, sig);
+    }
+
+    /**
+     * @notice Execute main limit order (on-chain)
+     * @param orderId Order ID
+     */
+    function executeOrder(uint256 orderId) external nonReentrant {}
+
+    /**
+     * @notice Execute TP limit order
+     * @param req Order request
+     * @param sig User signed message of the request
+     */
+    function executeTpOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
+        _placeOrder(req, sig);
+    }
+
+    /**
+     * @notice Execute TP limit order
+     * @param orderId Order ID
+     */
+    function executeTpOrder(uint256 orderId) external nonReentrant {}
+
+    /**
+     * @notice Execute SOL limit order
+     * @param req Order request
+     * @param sig User signed message of the request
+     */
+    function executeSlOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
+        _placeOrder(req, sig);
+    }
+
+    /**
+     * @notice Execute SL limit order
+     * @param orderId Order ID
+     */
+    function executeSlOrder(uint256 orderId) external nonReentrant {}
+
+    /// -----------------------------------------------------------------------
+    /// Internals
+    /// -----------------------------------------------------------------------
+
+    function _placeOrder(OrderRequest memory req, bytes memory sig) internal {
         address signer = getSigner(req, sig);
 
         if (list.accountID(req.user) == 0) {
@@ -103,11 +163,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         if (!account.isAuth(signer)) {
             revert NotAuth(signer);
         }
-    }
 
-    /// -----------------------------------------------------------------------
-    /// Internals
-    /// -----------------------------------------------------------------------
+        orders[nextOrderId++] = req;
+    }
 
     /**
      * @dev Split signature
@@ -163,6 +221,17 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, reqHash));
         (uint8 v, bytes32 r, bytes32 s) = splitSignature(_sig);
         return ecrecover(digest, v, r, s);
+    }
+
+    /// -----------------------------------------------------------------------
+    /// Modifiers
+    /// -----------------------------------------------------------------------
+
+    modifier onlyScw() {
+        if (list.accountID(msg.sender) == 0) {
+            revert NotScw(msg.sender);
+        }
+        _;
     }
 
     /// -----------------------------------------------------------------------
