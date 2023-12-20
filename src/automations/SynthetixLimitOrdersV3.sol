@@ -16,6 +16,15 @@ interface IList {
     function accountID(address) external view returns (uint64);
 }
 
+interface IPyth {
+    function getUpdateFee(bytes[] memory) external view returns (uint256);
+}
+
+interface IPythNode {
+    function pythAddress() external view returns (IPyth);
+    function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
+}
+
 contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
     /// -----------------------------------------------------------------------
     /// Library usage
@@ -67,6 +76,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// @notice SCW Index List
     IList public list;
 
+    /// @notice Pyth Node
+    IPythNode public pythNode;
+
     /// @notice Domain Separator for EIP-712
     bytes32 public DOMAIN_SEPARATOR;
 
@@ -80,7 +92,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     mapping(uint256 => OrderRequest) orders;
 
     /// @notice Initializer
-    function initialize(address _list) public initializer {
+    function initialize(address _list, address _pythNode) public initializer {
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 EIP712DOMAIN_TYPEHASH,
@@ -92,6 +104,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         );
         nextOrderId = 1;
         list = IList(_list);
+        pythNode = IPythNode(_pythNode);
     }
 
     /**
@@ -109,13 +122,23 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
         _placeOrder(req, sig);
+
+        if (!isPriceValid(req.price)) {
+            revert InvalidPriceRange(req.price);
+        }
     }
 
     /**
      * @notice Execute main limit order (on-chain)
      * @param orderId Order ID
      */
-    function executeOrder(uint256 orderId) external nonReentrant {}
+    function executeOrder(uint256 orderId) external nonReentrant {
+        OrderRequest memory order = orders[orderId];
+
+        if (!isPriceValid(order.price)) {
+            revert InvalidPriceRange(order.price);
+        }
+    }
 
     /**
      * @notice Execute TP limit order
@@ -124,13 +147,23 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeTpOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
         _placeOrder(req, sig);
+
+        if (!isPriceValid(req.tpPrice)) {
+            revert InvalidPriceRange(req.tpPrice);
+        }
     }
 
     /**
      * @notice Execute TP limit order
      * @param orderId Order ID
      */
-    function executeTpOrder(uint256 orderId) external nonReentrant {}
+    function executeTpOrder(uint256 orderId) external nonReentrant {
+        OrderRequest memory order = orders[orderId];
+
+        if (!isPriceValid(order.tpPrice)) {
+            revert InvalidPriceRange(order.tpPrice);
+        }
+    }
 
     /**
      * @notice Execute SOL limit order
@@ -139,18 +172,33 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeSlOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
         _placeOrder(req, sig);
+
+        if (!isPriceValid(req.slPrice)) {
+            revert InvalidPriceRange(req.slPrice);
+        }
     }
 
     /**
      * @notice Execute SL limit order
      * @param orderId Order ID
      */
-    function executeSlOrder(uint256 orderId) external nonReentrant {}
+    function executeSlOrder(uint256 orderId) external nonReentrant {
+        OrderRequest memory order = orders[orderId];
+
+        if (!isPriceValid(order.slPrice)) {
+            revert InvalidPriceRange(order.slPrice);
+        }
+    }
 
     /// -----------------------------------------------------------------------
     /// Internals
     /// -----------------------------------------------------------------------
 
+    /**
+     * @notice Validate order and push to storage
+     * @param req Order request
+     * @param sig User signed message of the request
+     */
     function _placeOrder(OrderRequest memory req, bytes memory sig) internal {
         address signer = getSigner(req, sig);
 
@@ -165,6 +213,23 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
 
         orders[nextOrderId++] = req;
+    }
+
+    /**
+     * @notice Update pyth oracle via Synthetix wrapper
+     * @param signedOffchainData signed offchain data
+     */
+    function _updateOracle(bytes memory signedOffchainData) internal {
+        (,,, bytes[] memory updateData) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
+
+        IPyth pyth = pythNode.pythAddress();
+        uint256 updateFee = pyth.getUpdateFee(updateData);
+
+        if (msg.value < updateFee) {
+            revert InsufficientFee(updateFee, msg.value);
+        }
+
+        pythNode.fulfillOracleQuery{value: updateFee}(signedOffchainData);
     }
 
     /**
@@ -223,6 +288,22 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         return ecrecover(digest, v, r, s);
     }
 
+    /**
+     * @notice Returns whether the price range is valid or not
+     * @param price price range object
+     */
+    function isPriceValid(PriceRange memory price) internal pure returns (bool) {
+        if (price.priceA == 0 || price.priceB == 0) {
+            return false;
+        }
+
+        if (price.priceA > price.priceB) {
+            return false;
+        }
+
+        return true;
+    }
+
     /// -----------------------------------------------------------------------
     /// Modifiers
     /// -----------------------------------------------------------------------
@@ -239,14 +320,27 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// -----------------------------------------------------------------------
 
     /**
-     * @dev Not Smart wallet error
+     * @notice Not Smart wallet error
      * @param user Address of the requested user
      */
     error NotScw(address user);
 
     /**
-     * @dev Unauthorized signature
+     * @notice Unauthorized signature
      * @param signer Address of the signer
      */
     error NotAuth(address signer);
+
+    /**
+     * @notice Invalid price range error
+     * @param price Price range
+     */
+    error InvalidPriceRange(PriceRange price);
+
+    /**
+     * @notice Insufficient fee
+     * @param required Required fee
+     * @param fee Paid fee
+     */
+    error InsufficientFee(uint256 required, uint256 fee);
 }
