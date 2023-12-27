@@ -59,6 +59,19 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         uint128 expiry;
     }
 
+    enum OrderStatus {
+        SUBMITTED,
+        EXECUTED,
+        COMPLETED,
+        CANCELLED
+    }
+
+    enum ExecutionType {
+        LIMIT_ORDER,
+        STOP_LOSS,
+        TAKE_PROFIT
+    }
+
     bytes32 constant EIP712DOMAIN_TYPEHASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
@@ -91,6 +104,12 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// @notice Orders
     mapping(uint256 => OrderRequest) orders;
 
+    /// @notice Order status
+    mapping(uint256 => OrderStatus) status;
+
+    /// @notice Cancelled hashes
+    mapping(bytes32 => bool) cancelledHashes;
+
     /// @notice Initializer
     function initialize(address _list, address _pythNode) public initializer {
         DOMAIN_SEPARATOR = keccak256(
@@ -111,7 +130,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @notice Place the order on-chain
      * @param req Order request
      */
-    function placeOrder(OrderRequest memory req) external nonReentrant onlyScw {
+    function placeOrder(OrderRequest memory req) external onlyScw {
         orders[nextOrderId++] = req;
     }
 
@@ -190,9 +209,40 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
     }
 
+    /**
+     * @notice Cancel off chain order
+     * @param sig Off-chain signature
+     */
+    function cancelOrder(bytes memory sig) external {
+        bytes32 digest = keccak256(sig);
+        cancelledHashes[digest] = true;
+    }
+
+    function cancelOrder(uint256 id) external {
+        OrderRequest memory order = orders[id];
+
+        if (msg.sender != order.user) {
+            revert NotAuthorized(order.user, msg.sender);
+        }
+
+        status[id] = OrderStatus.CANCELLED;
+    }
+
     /// -----------------------------------------------------------------------
     /// Internals
     /// -----------------------------------------------------------------------
+
+    /**
+     * @notice Generate spells to cast
+     * @param req Order request
+     * @param execType Type of order to execute
+     * @return targetNames Target names array for cast
+     * @return datas Target calldatas for cast
+     */
+    function _generateSpells(OrderRequest memory req, ExecutionType execType)
+        internal
+        returns (string[] memory targetNames, bytes[] memory datas)
+    {}
 
     /**
      * @notice Validate order and push to storage
@@ -326,10 +376,17 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     error NotScw(address user);
 
     /**
-     * @notice Unauthorized signature
+     * @notice Not auth of SCW
      * @param signer Address of the signer
      */
     error NotAuth(address signer);
+
+    /**
+     * @notice Unauthorized
+     * @param user Address of the user (SCW)
+     * @param sender Address of the tx sender
+     */
+    error NotAuthorized(address user, address sender);
 
     /**
      * @notice Invalid price range error
