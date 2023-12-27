@@ -23,6 +23,7 @@ interface IPyth {
 interface IPythNode {
     function pythAddress() external view returns (IPyth);
     function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
+    function getLatestPrice(bytes32 priceId, uint256 stalenessTolerance) external view returns (int256);
 }
 
 contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
@@ -110,6 +111,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// @notice Cancelled hashes
     mapping(bytes32 => bool) cancelledHashes;
 
+    /// @notice Submitted hashes
+    mapping(bytes32 => bool) submittedHashes;
+
     /// @notice Initializer
     function initialize(address _list, address _pythNode) public initializer {
         DOMAIN_SEPARATOR = keccak256(
@@ -140,11 +144,21 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param sig User signed message of the request
      */
     function executeOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
-        _placeOrder(req, sig);
-
         if (!isPriceValid(req.price)) {
             revert InvalidPriceRange(req.price);
         }
+
+        bytes32 digest = keccak256(sig);
+
+        if (cancelledHashes[digest]) {
+            revert SignatureCancelled(digest);
+        }
+
+        if (submittedHashes[digest]) {
+            revert SignatureSubmitted(digest);
+        }
+
+        _placeOrder(req, sig);
     }
 
     /**
@@ -153,6 +167,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (status[orderId] == OrderStatus.CANCELLED) {
+            revert OrderCancelled(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.EXECUTED) {
+            revert OrderExecuted(orderId);
+        }
 
         if (!isPriceValid(order.price)) {
             revert InvalidPriceRange(order.price);
@@ -165,11 +187,21 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param sig User signed message of the request
      */
     function executeTpOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
-        _placeOrder(req, sig);
-
         if (!isPriceValid(req.tpPrice)) {
             revert InvalidPriceRange(req.tpPrice);
         }
+
+        bytes32 digest = keccak256(sig);
+
+        if (cancelledHashes[digest]) {
+            revert SignatureCancelled(digest);
+        }
+
+        if (submittedHashes[digest]) {
+            revert SignatureSubmitted(digest);
+        }
+
+        _placeOrder(req, sig);
     }
 
     /**
@@ -178,6 +210,18 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeTpOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (status[orderId] == OrderStatus.CANCELLED) {
+            revert OrderCancelled(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.SUBMITTED) {
+            revert OrderNotExecuted(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.COMPLETED) {
+            revert OrderCompleted(orderId);
+        }
 
         if (!isPriceValid(order.tpPrice)) {
             revert InvalidPriceRange(order.tpPrice);
@@ -190,11 +234,21 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param sig User signed message of the request
      */
     function executeSlOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
-        _placeOrder(req, sig);
-
         if (!isPriceValid(req.slPrice)) {
             revert InvalidPriceRange(req.slPrice);
         }
+
+        bytes32 digest = keccak256(sig);
+
+        if (cancelledHashes[digest]) {
+            revert SignatureCancelled(digest);
+        }
+
+        if (submittedHashes[digest]) {
+            revert SignatureSubmitted(digest);
+        }
+
+        _placeOrder(req, sig);
     }
 
     /**
@@ -203,6 +257,18 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeSlOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (status[orderId] == OrderStatus.CANCELLED) {
+            revert OrderCancelled(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.SUBMITTED) {
+            revert OrderNotExecuted(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.COMPLETED) {
+            revert OrderCompleted(orderId);
+        }
 
         if (!isPriceValid(order.slPrice)) {
             revert InvalidPriceRange(order.slPrice);
@@ -263,6 +329,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
 
         orders[nextOrderId++] = req;
+        submittedHashes[keccak256(sig)] = true;
     }
 
     /**
@@ -400,4 +467,40 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param fee Paid fee
      */
     error InsufficientFee(uint256 required, uint256 fee);
+
+    /**
+     * @notice Executing cancelled order
+     * @param digest keccak256 of signature
+     */
+    error SignatureCancelled(bytes32 digest);
+
+    /**
+     * @notice Executing cancelled order
+     * @param orderId ID of the order
+     */
+    error OrderCancelled(uint256 orderId);
+
+    /**
+     * @notice Resubmitting signature
+     * @param digest keccak256 of signature
+     */
+    error SignatureSubmitted(bytes32 digest);
+
+    /**
+     * @notice Order already executed
+     * @param orderId ID of the order
+     */
+    error OrderExecuted(uint256 orderId);
+
+    /**
+     * @notice Order not executed (trying to execute TP/SL direct)
+     * @param orderId ID of the order
+     */
+    error OrderNotExecuted(uint256 orderId);
+
+    /**
+     * @notice Order already completed
+     * @param orderId ID of the order
+     */
+    error OrderCompleted(uint256 orderId);
 }
