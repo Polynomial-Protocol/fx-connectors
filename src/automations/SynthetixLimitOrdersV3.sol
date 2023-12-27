@@ -114,8 +114,13 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// @notice Submitted hashes
     mapping(bytes32 => bool) submittedHashes;
 
+    mapping(uint128 => bytes32) priceIds;
+
     /// @notice Initializer
-    function initialize(address _list, address _pythNode) public initializer {
+    function initialize(address _owner, address _list, address _pythNode) public initializer {
+        _auth_init(_owner, Authority(address(0x0)));
+        _reentrancy_init();
+
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 EIP712DOMAIN_TYPEHASH,
@@ -292,6 +297,20 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
 
         status[id] = OrderStatus.CANCELLED;
+    }
+
+    /// -----------------------------------------------------------------------
+    /// Admin methods
+    /// -----------------------------------------------------------------------
+
+    function updatePriceIds(uint128[] memory _marketIds, bytes32[] memory _priceIds) external requiresAuth {
+        if (_marketIds.length != _priceIds.length) {
+            revert LengthMismatch();
+        }
+
+        for (uint256 i = 0; i < _marketIds.length; i++) {
+            priceIds[_marketIds[i]] = _priceIds[i];
+        }
     }
 
     /// -----------------------------------------------------------------------
@@ -503,4 +522,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param orderId ID of the order
      */
     error OrderCompleted(uint256 orderId);
+
+    /**
+     * @notice Length mismatch error
+     */
+    error LengthMismatch();
 }
