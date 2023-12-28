@@ -152,6 +152,8 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function placeOrder(OrderRequest memory req) external onlyScw {
         orders[nextOrderId++] = req;
+
+        emit OrderPlaced(req.user, req.marketId, nextOrderId - 1, req);
     }
 
     /**
@@ -182,11 +184,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(req.price.priceA, req.price.priceB, currentPrice);
         }
 
-        (string[] memory targetNames, bytes[] memory datas) = _generateSpells(req, ExecutionType.LIMIT_ORDER);
-
-        IAccount(req.user).cast(targetNames, datas, address(this));
-
-        status[nextOrderId - 1] = OrderStatus.EXECUTED;
+        _castSpells(nextOrderId - 1, req, ExecutionType.LIMIT_ORDER);
     }
 
     /**
@@ -214,11 +212,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(order.price.priceA, order.price.priceB, currentPrice);
         }
 
-        (string[] memory targetNames, bytes[] memory datas) = _generateSpells(order, ExecutionType.LIMIT_ORDER);
-
-        IAccount(order.user).cast(targetNames, datas, address(this));
-
-        status[orderId] = OrderStatus.EXECUTED;
+        _castSpells(orderId, order, ExecutionType.LIMIT_ORDER);
     }
 
     /**
@@ -229,6 +223,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     function executeTpOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
         if (!_isPriceValid(req.tpPrice)) {
             revert InvalidPriceRange(req.tpPrice);
+        }
+
+        if (_isPriceValid(req.price)) {
+            revert OrderNotExecuted(0);
         }
 
         bytes32 digest = keccak256(sig);
@@ -249,11 +247,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(req.tpPrice.priceA, req.tpPrice.priceB, currentPrice);
         }
 
-        (string[] memory targetNames, bytes[] memory datas) = _generateSpells(req, ExecutionType.TAKE_PROFIT);
-
-        IAccount(req.user).cast(targetNames, datas, address(this));
-
-        status[nextOrderId - 1] = OrderStatus.COMPLETED;
+        _castSpells(nextOrderId - 1, req, ExecutionType.TAKE_PROFIT);
     }
 
     /**
@@ -285,11 +279,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(order.tpPrice.priceA, order.tpPrice.priceB, currentPrice);
         }
 
-        (string[] memory targetNames, bytes[] memory datas) = _generateSpells(order, ExecutionType.TAKE_PROFIT);
-
-        IAccount(order.user).cast(targetNames, datas, address(this));
-
-        status[orderId] = OrderStatus.COMPLETED;
+        _castSpells(orderId, order, ExecutionType.TAKE_PROFIT);
     }
 
     /**
@@ -300,6 +290,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     function executeSlOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
         if (!_isPriceValid(req.slPrice)) {
             revert InvalidPriceRange(req.slPrice);
+        }
+
+        if (_isPriceValid(req.price)) {
+            revert OrderNotExecuted(0);
         }
 
         bytes32 digest = keccak256(sig);
@@ -320,11 +314,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(req.slPrice.priceA, req.slPrice.priceB, currentPrice);
         }
 
-        (string[] memory targetNames, bytes[] memory datas) = _generateSpells(req, ExecutionType.STOP_LOSS);
-
-        IAccount(req.user).cast(targetNames, datas, address(this));
-
-        status[nextOrderId - 1] = OrderStatus.COMPLETED;
+        _castSpells(nextOrderId - 1, req, ExecutionType.STOP_LOSS);
     }
 
     /**
@@ -356,11 +346,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(order.slPrice.priceA, order.slPrice.priceB, currentPrice);
         }
 
-        (string[] memory targetNames, bytes[] memory datas) = _generateSpells(order, ExecutionType.STOP_LOSS);
-
-        IAccount(order.user).cast(targetNames, datas, address(this));
-
-        status[orderId] = OrderStatus.COMPLETED;
+        _castSpells(orderId, order, ExecutionType.STOP_LOSS);
     }
 
     /**
@@ -370,8 +356,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     function cancelOrder(bytes memory sig) external {
         bytes32 digest = keccak256(sig);
         cancelledHashes[digest] = true;
+
+        emit OrderCancel(sig);
     }
 
+    /**
+     * @notice Cancel Order
+     * @param id Order ID
+     */
     function cancelOrder(uint256 id) external {
         OrderRequest memory order = orders[id];
 
@@ -380,6 +372,40 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
 
         status[id] = OrderStatus.CANCELLED;
+
+        emit OrderCancel(order.user, order.marketId, id);
+    }
+
+    /**
+     * @notice Update Pyth oracle via Synthetix wrapper
+     * @param signedOffchainData Signed offchain data
+     */
+    function updateOracle(bytes memory signedOffchainData) external payable {
+        _updateOracle(signedOffchainData);
+    }
+
+    /**
+     * @notice Call multiple functions in the current contract and return the data from all of them if they all succeed
+     * @dev The `msg.value` should not be trusted for any method callable from multicall.
+     * @param data The encoded function data for each of the calls to make to this contract
+     * @return results The results from each of the calls passed in via data
+     */
+    function multicall(bytes[] calldata data) public payable returns (bytes[] memory results) {
+        results = new bytes[](data.length);
+        for (uint256 i = 0; i < data.length; i++) {
+            (bool success, bytes memory result) = address(this).delegatecall(data[i]);
+
+            if (!success) {
+                // Next 5 lines from https://ethereum.stackexchange.com/a/83577
+                if (result.length < 68) revert();
+                assembly {
+                    result := add(result, 0x04)
+                }
+                revert(abi.decode(result, (string)));
+            }
+
+            results[i] = result;
+        }
     }
 
     /// -----------------------------------------------------------------------
@@ -392,8 +418,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
 
         for (uint256 i = 0; i < _marketIds.length; i++) {
+            emit UpdatePriceId(_marketIds[i], priceIds[_marketIds[i]], _priceIds[i]);
             priceIds[_marketIds[i]] = _priceIds[i];
         }
+    }
+
+    function sweep() external requiresAuth {
+        (bool success,) = msg.sender.call{value: address(this).balance}("");
+        require(success);
     }
 
     /// -----------------------------------------------------------------------
@@ -404,16 +436,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @notice Generate spells to cast
      * @param req Order request
      * @param execType Type of order to execute
-     * @return targetNames Target names array for cast
-     * @return datas Target calldatas for cast
      */
-    function _generateSpells(OrderRequest memory req, ExecutionType execType)
-        internal
-        view
-        returns (string[] memory targetNames, bytes[] memory datas)
-    {
-        targetNames = new string[](1);
-        datas = new bytes[](1);
+    function _castSpells(uint256 orderId, OrderRequest memory req, ExecutionType execType) internal {
+        string[] memory targetNames = new string[](1);
+        bytes[] memory datas = new bytes[](1);
 
         targetNames[0] = "Synthetix-Perp-v3-v1.2";
 
@@ -425,6 +451,8 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 req.size,
                 req.price.acceptablePrice
             );
+
+            status[orderId] = OrderStatus.EXECUTED;
         } else {
             (,, int128 currentPosition) = perpMarket.getOpenPosition(req.accountId, req.marketId);
             int128 sizeDelta = req.size > currentPosition ? -currentPosition : -req.size;
@@ -434,7 +462,13 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             datas[0] = abi.encodeWithSignature(
                 "commitTrade(uint128,uint128,int128,uint256)", req.accountId, req.marketId, sizeDelta, acceptablePrice
             );
+
+            status[orderId] = OrderStatus.COMPLETED;
         }
+
+        IAccount(req.user).cast(targetNames, datas, address(this));
+
+        emit OrderExec(req.user, req.marketId, orderId, execType);
     }
 
     /**
@@ -457,6 +491,8 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         orders[nextOrderId++] = req;
         submittedHashes[keccak256(sig)] = true;
+
+        emit OrderPlaced(req.user, req.marketId, nextOrderId - 1, req);
     }
 
     /**
@@ -655,4 +691,48 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @notice Length mismatch error
      */
     error LengthMismatch();
+
+    /// -----------------------------------------------------------------------
+    /// Events
+    /// -----------------------------------------------------------------------
+
+    /**
+     * @notice Emitted when the order is pushed on-chain
+     * @param user Address of the user (SCW)
+     * @param marketId Market ID
+     * @param orderId Order ID
+     * @param req Order request
+     */
+    event OrderPlaced(address indexed user, uint128 indexed marketId, uint256 orderId, OrderRequest req);
+
+    /**
+     * @notice Emitted when the order is executed
+     * @param user Address of the user (SCW)
+     * @param marketId Market ID
+     * @param orderId Order ID
+     * @param execType Order request
+     */
+    event OrderExec(address indexed user, uint128 indexed marketId, uint256 orderId, ExecutionType execType);
+
+    /**
+     * @notice Emitted when the order is cancelled
+     * @param user Address of the user (SCW)
+     * @param marketId Market ID
+     * @param orderId Order ID
+     */
+    event OrderCancel(address indexed user, uint128 indexed marketId, uint256 orderId);
+
+    /**
+     * @notice Emitted when the order is cancelled
+     * @param sig Signature of the order
+     */
+    event OrderCancel(bytes sig);
+
+    /**
+     * @notice Emitted when price id is updated
+     * @param marketId Market ID
+     * @param oldId Old price ID
+     * @param newId New price ID
+     */
+    event UpdatePriceId(uint128 indexed marketId, bytes32 oldId, bytes32 newId);
 }
