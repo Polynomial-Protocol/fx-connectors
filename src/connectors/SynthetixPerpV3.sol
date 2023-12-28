@@ -50,6 +50,8 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
     uint256 public constant WAD = 1e18;
 
+    address private constant FEE_ADDR = 0x159c143eF9Be79d5672726150462C9EfA679b27c;
+
     IPerpMarket public immutable perpMarket;
 
     ISpotMarket public immutable spotMarket;
@@ -149,7 +151,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
         uint256 sizeDelta = getUint(getId, size);
 
         IPerpMarket.OrderCommitmentRequest memory data = IPerpMarket.OrderCommitmentRequest(
-            marketId, accountId, int128(int256(sizeDelta)), 0, acceptablePrice, "polynomial", address(0x0)
+            marketId, accountId, int128(int256(sizeDelta)), 0, acceptablePrice, "polynomial", FEE_ADDR
         );
 
         perpMarket.commitOrder(data);
@@ -171,7 +173,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
         uint256 sizeDelta = getUint(getId, size);
 
         IPerpMarket.OrderCommitmentRequest memory data = IPerpMarket.OrderCommitmentRequest(
-            marketId, accountId, -int128(int256(sizeDelta)), 0, acceptablePrice, "polynomial", address(0x0)
+            marketId, accountId, -int128(int256(sizeDelta)), 0, acceptablePrice, "polynomial", FEE_ADDR
         );
 
         perpMarket.commitOrder(data);
@@ -190,7 +192,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
         (,, int128 positionSize) = perpMarket.getOpenPosition(accountId, marketId);
 
         IPerpMarket.OrderCommitmentRequest memory data = IPerpMarket.OrderCommitmentRequest(
-            marketId, accountId, -int128(positionSize), 0, acceptablePrice, "polynomial", address(0x0)
+            marketId, accountId, -int128(positionSize), 0, acceptablePrice, "polynomial", FEE_ADDR
         );
 
         perpMarket.commitOrder(data);
@@ -205,7 +207,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
         returns (string memory _eventName, bytes memory _eventParam)
     {
         IPerpMarket.OrderCommitmentRequest memory data = IPerpMarket.OrderCommitmentRequest(
-            marketId, accountId, sizeDelta, 0, acceptablePrice, "polynomial", address(0x0)
+            marketId, accountId, sizeDelta, 0, acceptablePrice, "polynomial", FEE_ADDR
         );
 
         perpMarket.commitOrder(data);
