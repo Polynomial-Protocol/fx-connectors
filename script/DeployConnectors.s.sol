@@ -36,8 +36,8 @@ contract DeployConnectors is Script {
         names[0] = oneClickTrading.name();
         addrs[0] = address(oneClickTrading);
         
-        // connectors.updateConnectors(names, addrs);
-        connectors.addConnectors(names, addrs);
+        connectors.updateConnectors(names, addrs);
+        // connectors.addConnectors(names, addrs);
 
         vm.stopBroadcast();
     }

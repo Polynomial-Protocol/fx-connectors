@@ -6,9 +6,16 @@ import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {BaseConnector} from "../utils/BaseConnector.sol";
 
 interface IExclusiveImpl {
+    struct Auth {
+        bool isAuth;
+        uint256 expiry;
+    }
+
     function enableAdditionalAuth(address _user, uint256 _expiry) external;
 
     function disableAdditionalAuth(address user) external;
+    
+    function _additionalAuth(address _user) external returns(Auth memory);
 }
 
 interface IDefaultImpl {
@@ -42,6 +49,10 @@ contract OneClickTrading is BaseConnector {
         IDefaultImpl(address(this)).toggleBeta();
         _eventName = "LogToggleBeta(address,bool)";
         _eventParam = abi.encode(address(this), IDefaultImpl(address(this)).isBeta());
+    }
+    
+    function isAuthEnabled(address _user) public payable returns (IExclusiveImpl.Auth memory) {
+        return IExclusiveImpl(address(this))._additionalAuth(_user);
     }
 
     event LogEnableAuth(address indexed _user, uint256 _expiry);
