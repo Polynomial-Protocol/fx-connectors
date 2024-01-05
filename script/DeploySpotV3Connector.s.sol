@@ -14,16 +14,16 @@ interface IConnectors {
 
 contract DeployConnectors is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_NEW");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        IConnectors connectors = IConnectors(0x95325058C51Acc796E35F3D0309Ff098c4f818F1);
+        IConnectors connectors = IConnectors(0x90c5D64a67425d03774439d8d37194B29C2070FA);
 
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
 
         SynthetixSpotV3Connector snxV3 =
-        new SynthetixSpotV3Connector(0x41A883a85b1AdE59F41d459Fa550b40fa56429DB, 0xC9ee9628f23b14483EA413C28712690E8D2dC6a3, 0x7056F16f58638253B8A1E5023d67a8CF98000681);
+        new SynthetixSpotV3Connector(0x18141523403e2595D31b22604AcB8Fc06a4CaA61, 0x09d51516F38980035153a554c26Df3C6f51a23C3, 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913);
 
         names[0] = snxV3.name();
 

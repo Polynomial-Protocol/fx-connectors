@@ -153,9 +153,9 @@ contract SynthetixSpotV3Connector is BaseConnector {
         
         USDC.safeApprove(address(spotMarket), _wrapAmount);
         
-        spotMarket.wrap(marketId, _wrapAmount, _wrapAmount);
+        (uint256 sUSDCAmount, ) = spotMarket.wrap(marketId, _wrapAmount, _wrapAmount);
         
-        (uint256 usdAmountReceived, ) = spotMarket.sell(marketId, _wrapAmount, _wrapAmount, referrer);
+        (uint256 usdAmountReceived, ) = spotMarket.sell(marketId, sUSDCAmount, sUSDCAmount, referrer);
         
         setUint(setId, usdAmountReceived);
 
