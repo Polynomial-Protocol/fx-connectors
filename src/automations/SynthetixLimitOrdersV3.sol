@@ -353,8 +353,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @notice Cancel off chain order
      * @param sig Off-chain signature
      */
-    function cancelOrder(bytes memory sig) external {
+    function cancelOrder(OrderRequest memory req, bytes memory sig) external {
         bytes32 digest = keccak256(sig);
+
+        address signer = _getSigner(req, sig);
+        if (msg.sender != signer) {
+            revert NotAuthorized(signer, msg.sender);
+        }
+
         cancelledHashes[digest] = true;
 
         emit OrderCancel(sig);

@@ -35,7 +35,7 @@ contract MockIPythNode is IPythNode {
     IPyth public pyth;
     int256 public latestPrice;
 
-    function setatestPrice(int256 price) external {
+    function setLatestPrice(int256 price) external {
         latestPrice = price;
     }
 
