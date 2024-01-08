@@ -113,18 +113,18 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     uint256[50] private _gap;
 
     /// @notice Orders
-    mapping(uint256 => OrderRequest) orders;
+    mapping(uint256 => OrderRequest) public orders;
 
     /// @notice Order status
-    mapping(uint256 => OrderStatus) status;
+    mapping(uint256 => OrderStatus) public status;
 
     /// @notice Cancelled hashes
-    mapping(bytes32 => bool) cancelledHashes;
+    mapping(bytes32 => bool) public cancelledHashes;
 
     /// @notice Submitted hashes
-    mapping(bytes32 => bool) submittedHashes;
+    mapping(bytes32 => bool) public submittedHashes;
 
-    mapping(uint128 => bytes32) priceIds;
+    mapping(uint128 => bytes32) public priceIds;
 
     /// @notice Initializer
     function initialize(address _owner, address _list, address _pythNode, address _perpMarket) public initializer {
@@ -200,6 +200,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         if (status[orderId] == OrderStatus.EXECUTED) {
             revert OrderExecuted(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.COMPLETED) {
+            revert OrderCompleted(orderId);
         }
 
         if (!_isPriceValid(order.price)) {
@@ -458,7 +462,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 req.price.acceptablePrice
             );
 
-            status[orderId] = OrderStatus.EXECUTED;
+            status[orderId] = (_isPriceValid(req.tpPrice) || _isPriceValid(req.slPrice))
+                ? OrderStatus.EXECUTED
+                : OrderStatus.COMPLETED;
         } else {
             (,, int128 currentPosition) = perpMarket.getOpenPosition(req.accountId, req.marketId);
             int128 sizeDelta = req.size > currentPosition ? -currentPosition : -req.size;
