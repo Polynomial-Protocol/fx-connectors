@@ -4,8 +4,14 @@ pragma solidity ^0.8.9;
 import {IAccount, IList, IPythNode, IPyth, IPerpMarket} from "../../src/automations/SynthetixLimitOrdersV3.sol";
 
 contract MockIAccount is IAccount {
+    // string[] public targetNames;
+    bytes public data;
+    // address public origin;
+
     function cast(string[] calldata _targetNames, bytes[] calldata _datas, address _origin) external {
-        // not mocking for now
+        // targetNames = _targetNames;
+        data = _datas[0];
+        // origin = _origin;
     }
 
     function isAuth(address) external pure returns (bool) {
@@ -60,6 +66,10 @@ contract MockIPerpMarket is IPerpMarket {
     int256 public pnl;
     int256 public accruedFunding;
     int128 public positionSize;
+
+    function setOpenPosition(int128 _size) public {
+        positionSize = _size;
+    }
 
     function getOpenPosition(uint128, uint128) external view returns (int256, int256, int128) {
         return (pnl, accruedFunding, positionSize);

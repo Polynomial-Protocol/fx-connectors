@@ -35,11 +35,15 @@ contract SynthetixLimitOrdersV3Test is Test {
     IList list;
     MockIPythNode pythnode;
     IPyth pyth;
-    IPerpMarket perpMarket;
-    IAccount account; //scw
+    MockIPerpMarket perpMarket;
+    MockIAccount account; //scw
     SynthetixLimitOrdersV3.OrderRequest req;
     bytes sig;
+
     uint128 expiry = 100;
+    uint128 accountId = 11;
+    uint128 marketId = 22;
+    int128 size = 33;
 
     /// -----------------------------------------------------------------------
     /// setUp
@@ -75,7 +79,9 @@ contract SynthetixLimitOrdersV3Test is Test {
 
         SynthetixLimitOrdersV3.PriceRange memory range = SynthetixLimitOrdersV3.PriceRange(0, 0, 0);
         pythnode.setLatestPrice(50);
-        req = SynthetixLimitOrdersV3.OrderRequest(address(account), range, range, range, 1, 1, 1, expiry);
+        req = SynthetixLimitOrdersV3.OrderRequest(
+            address(account), range, range, range, accountId, marketId, size, expiry
+        );
         sig = computeOrderRequestSign(req, userKey);
 
         synthetixLimitOrders.initialize(owner, address(list), address(pythnode), address(perpMarket));
@@ -119,6 +125,14 @@ contract SynthetixLimitOrdersV3Test is Test {
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, reqHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
+    }
+
+    function getCommitTradeHash(uint128 accId, uint128 _marketId, int128 _size, uint256 accPrice)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeWithSignature("commitTrade(uint128,uint128,int128,uint256)", accId, _marketId, _size, accPrice);
     }
 
     function setPrices(uint256 priceA, uint256 priceB, uint256 latestPrice) internal {
@@ -313,6 +327,16 @@ contract SynthetixLimitOrdersV3Test is Test {
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.EXECUTED);
     }
 
+    function test_executeOrderOffChain_castValues() external {
+        req.price.acceptablePrice = 3;
+        setPrices(10, 100, 50);
+
+        vm.prank(someone);
+        synthetixLimitOrders.executeOrder(req, sig);
+
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, size, 3));
+    }
+
     /// -----------------------------------------------------------------------
     /// Test - Execute TP Order (offchain)
     /// -----------------------------------------------------------------------
@@ -404,6 +428,24 @@ contract SynthetixLimitOrdersV3Test is Test {
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.COMPLETED);
     }
 
+    function test_executeTpOrderOffChain_castValues() external {
+        req.tpPrice.acceptablePrice = 3;
+        setTpPrices(0, 0, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size - 1);
+
+        vm.prank(someone);
+        synthetixLimitOrders.executeTpOrder(req, sig);
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -(req.size - 1), 3));
+
+        req.tpPrice.acceptablePrice = 4;
+        setTpPrices(0, 0, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size + 1);
+
+        vm.prank(someone);
+        synthetixLimitOrders.executeTpOrder(req, sig);
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -req.size, 4));
+    }
+
     /// -----------------------------------------------------------------------
     /// Test - Execute SL Order (offchain)
     /// -----------------------------------------------------------------------
@@ -489,6 +531,24 @@ contract SynthetixLimitOrdersV3Test is Test {
         assertEq(synthetixLimitOrders.nextOrderId(), 2);
         assertEq(synthetixLimitOrders.submittedHashes(keccak256(sig)), true);
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.COMPLETED);
+    }
+
+    function test_executeSlOrderOffChain_castValues() external {
+        req.slPrice.acceptablePrice = 3;
+        setSlPrices(0, 0, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size - 1);
+
+        vm.prank(someone);
+        synthetixLimitOrders.executeSlOrder(req, sig);
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -(req.size - 1), 3));
+
+        req.slPrice.acceptablePrice = 4;
+        setSlPrices(0, 0, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size + 1);
+
+        vm.prank(someone);
+        synthetixLimitOrders.executeSlOrder(req, sig);
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -req.size, 4));
     }
 
     /// -----------------------------------------------------------------------
@@ -627,6 +687,17 @@ contract SynthetixLimitOrdersV3Test is Test {
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.EXECUTED);
     }
 
+    function test_executeOrderOnChain_castValues() external {
+        req.price.acceptablePrice = 3;
+        setPrices(10, 100, 50);
+        placeOrder();
+
+        vm.prank(someone);
+        synthetixLimitOrders.executeOrder(1);
+
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, size, 3));
+    }
+
     /// -----------------------------------------------------------------------
     /// Test - Execute TP Order (onchain)
     /// -----------------------------------------------------------------------
@@ -760,6 +831,30 @@ contract SynthetixLimitOrdersV3Test is Test {
         vm.stopPrank();
 
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.COMPLETED);
+    }
+
+    function test_executeTpOrderOnChain_castValues() external {
+        req.tpPrice.acceptablePrice = 3;
+        setTpPrices(10, 100, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size - 1);
+
+        placeOrder();
+        vm.startPrank(someone);
+        synthetixLimitOrders.executeOrder(1);
+        synthetixLimitOrders.executeTpOrder(1);
+        vm.stopPrank();
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -(req.size - 1), 3));
+
+        req.tpPrice.acceptablePrice = 4;
+        setTpPrices(10, 100, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size + 1);
+
+        placeOrder();
+        vm.startPrank(someone);
+        synthetixLimitOrders.executeOrder(2);
+        synthetixLimitOrders.executeTpOrder(2);
+        vm.stopPrank();
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -req.size, 4));
     }
 
     /// -----------------------------------------------------------------------
@@ -897,5 +992,27 @@ contract SynthetixLimitOrdersV3Test is Test {
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.COMPLETED);
     }
 
-    // TODO(Push): check available price usage in _cast spells
+    function test_executeSlOrderOnChain_castValues() external {
+        req.slPrice.acceptablePrice = 3;
+        setSlPrices(10, 100, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size - 1);
+
+        placeOrder();
+        vm.startPrank(someone);
+        synthetixLimitOrders.executeOrder(1);
+        synthetixLimitOrders.executeSlOrder(1);
+        vm.stopPrank();
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -(req.size - 1), 3));
+
+        req.slPrice.acceptablePrice = 4;
+        setSlPrices(10, 100, 10, 100, 50);
+        perpMarket.setOpenPosition(req.size + 1);
+
+        placeOrder();
+        vm.startPrank(someone);
+        synthetixLimitOrders.executeOrder(2);
+        synthetixLimitOrders.executeSlOrder(2);
+        vm.stopPrank();
+        assertEq(account.data(), getCommitTradeHash(accountId, marketId, -req.size, 4));
+    }
 }
