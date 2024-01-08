@@ -39,6 +39,7 @@ contract SynthetixLimitOrdersV3Test is Test {
     IAccount account; //scw
     SynthetixLimitOrdersV3.OrderRequest req;
     bytes sig;
+    uint128 expiry = 100;
 
     /// -----------------------------------------------------------------------
     /// setUp
@@ -74,7 +75,7 @@ contract SynthetixLimitOrdersV3Test is Test {
 
         SynthetixLimitOrdersV3.PriceRange memory range = SynthetixLimitOrdersV3.PriceRange(0, 0, 0);
         pythnode.setLatestPrice(50);
-        req = SynthetixLimitOrdersV3.OrderRequest(address(account), range, range, range, 1, 1, 1, 1);
+        req = SynthetixLimitOrdersV3.OrderRequest(address(account), range, range, range, 1, 1, 1, expiry);
         sig = computeOrderRequestSign(req, userKey);
 
         synthetixLimitOrders.initialize(owner, address(list), address(pythnode), address(perpMarket));
@@ -228,6 +229,15 @@ contract SynthetixLimitOrdersV3Test is Test {
         synthetixLimitOrders.executeOrder(req, sig);
     }
 
+    function test_executeOrderOffChain_withExpiredOrder() external {
+        setPrices(10, 100, 50);
+
+        vm.prank(someone);
+        vm.warp(expiry + 1);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.OrderExpired.selector, req.expiry, expiry + 1));
+        synthetixLimitOrders.executeOrder(req, sig);
+    }
+
     function test_executeOrderOffChain_withCancelledSig() external {
         setPrices(10, 100, 50);
 
@@ -332,6 +342,15 @@ contract SynthetixLimitOrdersV3Test is Test {
         synthetixLimitOrders.executeTpOrder(req, sig);
     }
 
+    function test_executeTpOrderOffChain_withExpiredOrder() external {
+        setTpPrices(0, 0, 10, 100, 50);
+
+        vm.prank(someone);
+        vm.warp(expiry + 1);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.OrderExpired.selector, req.expiry, expiry + 1));
+        synthetixLimitOrders.executeTpOrder(req, sig);
+    }
+
     function test_executeTpOrderOffChain_withCancelledSig() external {
         setTpPrices(0, 0, 10, 100, 50);
 
@@ -413,6 +432,15 @@ contract SynthetixLimitOrdersV3Test is Test {
         synthetixLimitOrders.executeSlOrder(req, sig);
     }
 
+    function test_executedSlOrderOffChain_withExpiredOrder() external {
+        setSlPrices(0, 0, 10, 100, 50);
+
+        vm.prank(someone);
+        vm.warp(expiry + 1);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.OrderExpired.selector, req.expiry, expiry + 1));
+        synthetixLimitOrders.executeSlOrder(req, sig);
+    }
+
     function test_executeSlOrderOffChain_withCancelledSig() external {
         setSlPrices(0, 0, 10, 100, 50);
         vm.prank(user);
@@ -487,6 +515,15 @@ contract SynthetixLimitOrdersV3Test is Test {
     /// -----------------------------------------------------------------------
     /// Test - Execute Order (onchain)
     /// -----------------------------------------------------------------------
+
+    function test_executeOrderOnChain_withExpiredOrder() external {
+        placeOrder();
+
+        vm.prank(someone);
+        vm.warp(expiry + 1);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.OrderExpired.selector, req.expiry, expiry + 1));
+        synthetixLimitOrders.executeOrder(1);
+    }
 
     function test_executeOrderOnChain_withCancelledOrder() external {
         placeOrder();
@@ -593,6 +630,15 @@ contract SynthetixLimitOrdersV3Test is Test {
     /// -----------------------------------------------------------------------
     /// Test - Execute TP Order (onchain)
     /// -----------------------------------------------------------------------
+
+    function test_executeTpOrderOnChain_withExpiredOrder() external {
+        placeOrder();
+
+        vm.prank(someone);
+        vm.warp(expiry + 1);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.OrderExpired.selector, req.expiry, expiry + 1));
+        synthetixLimitOrders.executeTpOrder(1);
+    }
 
     function test_executeTpOrderOnChain_withCancelled() external {
         placeOrder();
@@ -720,6 +766,15 @@ contract SynthetixLimitOrdersV3Test is Test {
     /// Test - Execute SL Order (onchain)
     /// -----------------------------------------------------------------------
 
+    function test_executeSlOrderOnChain_withExpiredOrder() external {
+        placeOrder();
+
+        vm.prank(someone);
+        vm.warp(expiry + 1);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.OrderExpired.selector, req.expiry, expiry + 1));
+        synthetixLimitOrders.executeSlOrder(1);
+    }
+
     function test_executeSlOrderOnChain_withCancelled() external {
         placeOrder();
 
@@ -842,6 +897,5 @@ contract SynthetixLimitOrdersV3Test is Test {
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.COMPLETED);
     }
 
-    // TODO(Push): add a check, if the block timestamp is after expiry don't execute
     // TODO(Push): check available price usage in _cast spells
 }

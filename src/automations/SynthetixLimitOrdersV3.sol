@@ -166,6 +166,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert InvalidPriceRange(req.price);
         }
 
+        if (block.timestamp > req.expiry) {
+            revert OrderExpired(req.expiry, block.timestamp);
+        }
+
         bytes32 digest = keccak256(sig);
 
         if (cancelledHashes[digest]) {
@@ -193,6 +197,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (block.timestamp > order.expiry) {
+            revert OrderExpired(order.expiry, block.timestamp);
+        }
 
         if (status[orderId] == OrderStatus.CANCELLED) {
             revert OrderCancelled(orderId);
@@ -233,6 +241,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert OrderNotExecuted(0);
         }
 
+        if (block.timestamp > req.expiry) {
+            revert OrderExpired(req.expiry, block.timestamp);
+        }
+
         bytes32 digest = keccak256(sig);
 
         if (cancelledHashes[digest]) {
@@ -260,6 +272,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeTpOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (block.timestamp > order.expiry) {
+            revert OrderExpired(order.expiry, block.timestamp);
+        }
 
         if (status[orderId] == OrderStatus.CANCELLED) {
             revert OrderCancelled(orderId);
@@ -300,6 +316,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert OrderNotExecuted(0);
         }
 
+        if (block.timestamp > req.expiry) {
+            revert OrderExpired(req.expiry, block.timestamp);
+        }
+
         bytes32 digest = keccak256(sig);
 
         if (cancelledHashes[digest]) {
@@ -327,6 +347,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeSlOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (block.timestamp > order.expiry) {
+            revert OrderExpired(order.expiry, block.timestamp);
+        }
 
         if (status[orderId] == OrderStatus.CANCELLED) {
             revert OrderCancelled(orderId);
@@ -698,6 +722,13 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param currentPrice Current price
      */
     error PriceNotInRange(uint256 priceA, uint256 priceB, uint256 currentPrice);
+
+    /**
+     * @notice Error when order's expiry timestamp has passed
+     * @param orderExpiry order.expiry
+     * @param blockTimestamp block.timestamp
+     */
+    error OrderExpired(uint256 orderExpiry, uint256 blockTimestamp);
 
     /**
      * @notice Length mismatch error
