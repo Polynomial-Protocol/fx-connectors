@@ -155,7 +155,7 @@ contract AccountResolver is Helpers {
     }
 
     function getAccountVersions(address[] memory accounts) public view returns (uint256[] memory) {
-        uint256[] memory versions = new uint[](accounts.length);
+        uint256[] memory versions = new uint256[](accounts.length);
         for (uint256 i = 0; i < accounts.length; i++) {
             versions[i] = AccountInterface(accounts[i]).version();
         }

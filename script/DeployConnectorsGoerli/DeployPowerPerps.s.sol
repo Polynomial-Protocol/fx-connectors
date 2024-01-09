@@ -31,13 +31,8 @@ contract DeployConnectorsGoerli is Script {
         address _shortToken = 0x8C70B8e7fC0Bbb7e208BaE8754cC696094735b76;
         address _liquidityPool = 0xAFda86a47007949226C0eaC012A4E46a3108a3A6;
         address _exchange = 0xF4F975EefEd5C7df71bcC33d99b8F6c920210262;
-        PowerPerpConnector power = new PowerPerpConnector(
-            _liquidityToken,
-            _powerPerp,
-            _shortToken,
-            _liquidityPool,
-            _exchange
-        );
+        PowerPerpConnector power =
+            new PowerPerpConnector(_liquidityToken, _powerPerp, _shortToken, _liquidityPool, _exchange);
 
         names[0] = power.name();
         addrs[0] = address(power);
