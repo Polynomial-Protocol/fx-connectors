@@ -27,11 +27,7 @@ contract DeployLimitOrder is Script {
             2e18, // 2 sUSD
             3e14 // 3 bps
         );
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(limitOrder),
-            admin,
-            data
-        );
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(limitOrder), admin, data);
 
         SynthetixLimitOrders target = SynthetixLimitOrders(payable(address(proxy)));
 

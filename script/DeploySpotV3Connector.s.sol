@@ -22,8 +22,11 @@ contract DeployConnectors is Script {
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
 
-        SynthetixSpotV3Connector snxV3 =
-        new SynthetixSpotV3Connector(0x18141523403e2595D31b22604AcB8Fc06a4CaA61, 0x09d51516F38980035153a554c26Df3C6f51a23C3, 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913);
+        SynthetixSpotV3Connector snxV3 = new SynthetixSpotV3Connector(
+            0x18141523403e2595D31b22604AcB8Fc06a4CaA61,
+            0x09d51516F38980035153a554c26Df3C6f51a23C3,
+            0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+        );
 
         names[0] = snxV3.name();
 
