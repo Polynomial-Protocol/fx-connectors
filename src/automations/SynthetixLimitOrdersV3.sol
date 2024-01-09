@@ -113,18 +113,18 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     uint256[50] private _gap;
 
     /// @notice Orders
-    mapping(uint256 => OrderRequest) orders;
+    mapping(uint256 => OrderRequest) public orders;
 
     /// @notice Order status
-    mapping(uint256 => OrderStatus) status;
+    mapping(uint256 => OrderStatus) public status;
 
     /// @notice Cancelled hashes
-    mapping(bytes32 => bool) cancelledHashes;
+    mapping(bytes32 => bool) public cancelledHashes;
 
     /// @notice Submitted hashes
-    mapping(bytes32 => bool) submittedHashes;
+    mapping(bytes32 => bool) public submittedHashes;
 
-    mapping(uint128 => bytes32) priceIds;
+    mapping(uint128 => bytes32) public priceIds;
 
     /// @notice Initializer
     function initialize(address _owner, address _list, address _pythNode, address _perpMarket) public initializer {
@@ -166,6 +166,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert InvalidPriceRange(req.price);
         }
 
+        if (block.timestamp > req.expiry) {
+            revert OrderExpired(req.expiry, block.timestamp);
+        }
+
         bytes32 digest = keccak256(sig);
 
         if (cancelledHashes[digest]) {
@@ -194,12 +198,20 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     function executeOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
 
+        if (block.timestamp > order.expiry) {
+            revert OrderExpired(order.expiry, block.timestamp);
+        }
+
         if (status[orderId] == OrderStatus.CANCELLED) {
             revert OrderCancelled(orderId);
         }
 
         if (status[orderId] == OrderStatus.EXECUTED) {
             revert OrderExecuted(orderId);
+        }
+
+        if (status[orderId] == OrderStatus.COMPLETED) {
+            revert OrderCompleted(orderId);
         }
 
         if (!_isPriceValid(order.price)) {
@@ -229,6 +241,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert OrderNotExecuted(0);
         }
 
+        if (block.timestamp > req.expiry) {
+            revert OrderExpired(req.expiry, block.timestamp);
+        }
+
         bytes32 digest = keccak256(sig);
 
         if (cancelledHashes[digest]) {
@@ -256,6 +272,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeTpOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (block.timestamp > order.expiry) {
+            revert OrderExpired(order.expiry, block.timestamp);
+        }
 
         if (status[orderId] == OrderStatus.CANCELLED) {
             revert OrderCancelled(orderId);
@@ -296,6 +316,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert OrderNotExecuted(0);
         }
 
+        if (block.timestamp > req.expiry) {
+            revert OrderExpired(req.expiry, block.timestamp);
+        }
+
         bytes32 digest = keccak256(sig);
 
         if (cancelledHashes[digest]) {
@@ -323,6 +347,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      */
     function executeSlOrder(uint256 orderId) external nonReentrant {
         OrderRequest memory order = orders[orderId];
+
+        if (block.timestamp > order.expiry) {
+            revert OrderExpired(order.expiry, block.timestamp);
+        }
 
         if (status[orderId] == OrderStatus.CANCELLED) {
             revert OrderCancelled(orderId);
@@ -353,8 +381,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @notice Cancel off chain order
      * @param sig Off-chain signature
      */
-    function cancelOrder(bytes memory sig) external {
+    function cancelOrder(OrderRequest memory req, bytes memory sig) external {
         bytes32 digest = keccak256(sig);
+
+        address signer = _getSigner(req, sig);
+        if (msg.sender != signer) {
+            revert NotAuthorized(signer, msg.sender);
+        }
+
         cancelledHashes[digest] = true;
 
         emit OrderCancel(sig);
@@ -452,7 +486,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 req.price.acceptablePrice
             );
 
-            status[orderId] = OrderStatus.EXECUTED;
+            status[orderId] = (_isPriceValid(req.tpPrice) || _isPriceValid(req.slPrice))
+                ? OrderStatus.EXECUTED
+                : OrderStatus.COMPLETED;
         } else {
             (,, int128 currentPosition) = perpMarket.getOpenPosition(req.accountId, req.marketId);
             int128 sizeDelta = req.size > currentPosition ? -currentPosition : -req.size;
@@ -686,6 +722,13 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param currentPrice Current price
      */
     error PriceNotInRange(uint256 priceA, uint256 priceB, uint256 currentPrice);
+
+    /**
+     * @notice Error when order's expiry timestamp has passed
+     * @param orderExpiry order.expiry
+     * @param blockTimestamp block.timestamp
+     */
+    error OrderExpired(uint256 orderExpiry, uint256 blockTimestamp);
 
     /**
      * @notice Length mismatch error
