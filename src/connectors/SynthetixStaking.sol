@@ -74,13 +74,17 @@ contract SynthetixStakingConnector is BaseConnector {
         _eventParam = abi.encode(requestedAccountId);
     }
 
-    function deposit(uint128 accountId, uint256 tokenAmount)
+    function deposit(uint128 accountId, uint256 tokenAmount, uint256 getId, uint256 setId)
         public
         returns (string memory _eventName, bytes memory _eventParam)
     {
-        USDC.safeApprove(address(spotMarket), tokenAmount);
-        // NOTE setting minAmountReceived 0 might be a bad idea, but did it to avoid arithemtics
-        (uint256 synthAmount,) = spotMarket.wrap(USD_MARKET_ID, tokenAmount, 0);
+        uint256 _tokenAmount = getUint(getId, tokenAmount);
+        if (_tokenAmount == type(uint256).max) {
+            _tokenAmount = USDC.balanceOf(address(this));
+        }
+
+        USDC.safeApprove(address(spotMarket), _tokenAmount);
+        (uint256 synthAmount,) = spotMarket.wrap(USD_MARKET_ID, _tokenAmount, 0);
 
         sUSDC.safeApprove(address(synthetix), synthAmount);
         synthetix.deposit(accountId, address(sUSDC), synthAmount);
@@ -91,28 +95,35 @@ contract SynthetixStakingConnector is BaseConnector {
         // using leverage 1x
         synthetix.delegateCollateral(accountId, preferredPoolID, address(sUSDC), newCollateral, 1 ether);
 
+        setUint(setId, synthAmount);
+
         _eventName = "LogDeposit(uint128,uint256,uint256,uint256)";
-        _eventParam = abi.encode(accountId, tokenAmount, synthAmount, newCollateral);
+        _eventParam = abi.encode(accountId, _tokenAmount, synthAmount, newCollateral);
     }
 
-    function withdraw(uint128 accountId, uint256 synthAmount)
+    function withdraw(uint128 accountId, uint256 synthAmount, uint256 getId, uint256 setId)
         public
         returns (string memory _eventName, bytes memory _eventParam)
     {
         (, uint256 assignedCollateral,) = synthetix.getAccountCollateral(accountId, address(sUSDC));
-        uint256 newCollateral = assignedCollateral - synthAmount;
 
+        uint256 _synthAmount = getUint(getId, synthAmount);
+        if (_synthAmount == type(uint256).max) {
+            _synthAmount = assignedCollateral;
+        }
+
+        uint256 newCollateral = assignedCollateral - _synthAmount;
         // using leverage 1x
         synthetix.delegateCollateral(accountId, preferredPoolID, address(sUSDC), newCollateral, 1 ether);
 
-        synthetix.withdraw(accountId, address(sUSDC), synthAmount);
-        sUSDC.safeApprove(address(spotMarket), synthAmount);
+        synthetix.withdraw(accountId, address(sUSDC), _synthAmount);
 
-        // NOTE setting minAmountReceived 0 might be a bad idea, but did it to avoid arithemtics
-        (uint256 tokenAmount,) = spotMarket.unwrap(USD_MARKET_ID, synthAmount, 0);
+        (uint256 tokenAmount,) = spotMarket.unwrap(USD_MARKET_ID, _synthAmount, 0);
+
+        setUint(setId, tokenAmount);
 
         _eventName = "LogWithdraw(uint128,uint256,uint256,uint256)";
-        _eventParam = abi.encode(accountId, tokenAmount, synthAmount, newCollateral);
+        _eventParam = abi.encode(accountId, tokenAmount, _synthAmount, newCollateral);
     }
 
     event LogCreateAccount(uint128 accountId);
