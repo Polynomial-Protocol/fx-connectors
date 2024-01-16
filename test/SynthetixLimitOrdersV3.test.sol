@@ -9,7 +9,7 @@ import {
     IPyth,
     IPerpMarket,
     IAccount
-} from "../src/automations/SynthetixLimitOrdersV3.sol";
+} from "../src/common/automations/SynthetixLimitOrdersV3.sol";
 import {MockIList, MockIPyth, MockIPythNode, MockIPerpMarket, MockIAccount} from "./mocks/mocks.sol";
 
 contract SynthetixLimitOrdersV3Test is Test {
