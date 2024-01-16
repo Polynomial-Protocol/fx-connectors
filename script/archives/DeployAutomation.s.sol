@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {SynthetixLimitOrders} from "../../src/mainnet/optimism/automations/SynthetixLimitOrders.sol";
+import {SynthetixLimitOrders} from "../../src/common/automations/SynthetixLimitOrders.sol";
 
 contract DeployAutomation is Script {
     function run() external {

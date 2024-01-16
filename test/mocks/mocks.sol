@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {
-    IAccount,
-    IList,
-    IPythNode,
-    IPyth,
-    IPerpMarket
-} from "../../src/mainnet/optimism/automations/SynthetixLimitOrdersV3.sol";
+import {IAccount, IList, IPythNode, IPyth, IPerpMarket} from "../../src/common/automations/SynthetixLimitOrdersV3.sol";
 
 contract MockIAccount is IAccount {
     // string[] public targetNames;

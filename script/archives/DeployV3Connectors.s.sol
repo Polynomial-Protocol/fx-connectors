@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {SynthetixSpotV3Connector} from "../../src/mainnet/optimism/connectors/SynthetixSpotV3.sol";
-import {SynthetixPerpV3Connector} from "../../src/mainnet/optimism/connectors/SynthetixPerpV3.sol";
+import {SynthetixSpotV3Connector} from "../../src/optimism/connectors/SynthetixSpotV3.sol";
+import {SynthetixPerpV3Connector} from "../../src/optimism/connectors/SynthetixPerpV3.sol";
 
 interface IConnectors {
     function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;

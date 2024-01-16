@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {BellPepper} from "../../src/mainnet/optimism/common/resolvers/BellPepper.sol";
+import {BellPepper} from "../../src/common/resolvers/BellPepper.sol";
 
 contract DeployBellPepper is Script {
     function run() external {

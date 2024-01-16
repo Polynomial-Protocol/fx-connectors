@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {SynthetixPerpResolver} from "../../src/mainnet/optimism/common/resolvers/SynthetixPerp.sol";
-import {TransparentUpgradeableProxy} from "../../src/mainnet/optimism/common/proxy/TransparentUpgradeProxy.sol";
+import {SynthetixPerpResolver} from "../../src/common/resolvers/SynthetixPerp.sol";
+import {TransparentUpgradeableProxy} from "../../src/common/proxy/TransparentUpgradeProxy.sol";
 
 contract DeployProxyResolver is Script {
     function run() external {

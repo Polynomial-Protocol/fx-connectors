@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {Script} from "forge-std/Script.sol";
-import {SynthetixPerpConnector} from "../../../src/mainnet/optimism/connectors/SynthetixPerp.sol";
+import {SynthetixPerpConnector} from "../../../src/optimism/connectors/SynthetixPerp.sol";
 
 interface IPerpsV2Market {
     function transferMargin(int256 marginDelta) external;

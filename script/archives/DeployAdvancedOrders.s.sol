@@ -4,10 +4,10 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {SynthetixLimitOrders} from "../../src/mainnet/optimism/automations/SynthetixAdvancedOrders.sol";
-import {TransparentUpgradeableProxy} from "../../src/mainnet/optimism/common/proxy/TransparentUpgradeProxy.sol";
+import {SynthetixLimitOrders} from "../../src/common/automations/SynthetixAdvancedOrders.sol";
+import {TransparentUpgradeableProxy} from "../../src/common/proxy/TransparentUpgradeProxy.sol";
 
-import {IPyth} from "../../src/mainnet/optimism/common/interfaces/IPyth.sol";
+import {IPyth} from "../../src/common/interfaces/IPyth.sol";
 
 contract DeployLimitOrder is Script {
     function run() external {

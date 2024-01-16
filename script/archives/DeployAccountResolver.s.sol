@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {AccountResolver} from "../../src/mainnet/optimism/common/resolvers/Accounts.sol";
+import {AccountResolver} from "../../src/common/resolvers/Accounts.sol";
 
 contract DeployResolver is Script {
     function run() external {

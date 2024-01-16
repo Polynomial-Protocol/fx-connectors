@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import {Script} from "forge-std/Script.sol";
 
-import {SynthetixLimitOrders} from "../../src/mainnet/optimism/automations/SynthetixAdvancedOrders.sol";
+import {SynthetixLimitOrders} from "../../src/common/automations/SynthetixAdvancedOrders.sol";
 
 contract UpdatePythOracleIds is Script {
     function run() external {

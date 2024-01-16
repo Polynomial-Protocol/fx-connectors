@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {PolynomialAuthority} from "../../src/mainnet/optimism/common/utils/PolynomialAuthority.sol";
+import {PolynomialAuthority} from "../../src/common/utils/PolynomialAuthority.sol";
 
 contract DeployPolynomialAuthority is Script {
     function run() external {

@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {GasEstimater} from "../../src/mainnet/optimism/common/utils/GasEstimater.sol";
-import {TransparentUpgradeableProxy} from "../../src/mainnet/optimism/common/proxy/TransparentUpgradeProxy.sol";
+import {GasEstimater} from "../../src/common/utils/GasEstimater.sol";
+import {TransparentUpgradeableProxy} from "../../src/common/proxy/TransparentUpgradeProxy.sol";
 
 contract DeployGasEstimater is Script {
     function run() external {

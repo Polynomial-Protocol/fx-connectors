@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {AuthConnector} from "../../src/mainnet/optimism/connectors/Auth.sol";
-import {BasicConnector} from "../../src/mainnet/optimism/connectors/Basic.sol";
+import {AuthConnector} from "../../src/optimism/connectors/Auth.sol";
+import {BasicConnector} from "../../src/optimism/connectors/Basic.sol";
 
 interface IConnectors {
     function addConnectors(string[] calldata _connectorNames, address[] calldata _connectors) external;

@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {FxStorage} from "../../src/mainnet/optimism/common/utils/Storage.sol";
+import {FxStorage} from "../../src/common/utils/Storage.sol";
 
 contract DeployStorage is Script {
     function run() external {

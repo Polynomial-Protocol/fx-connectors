@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 
-import {DragonFruit} from "../../src/mainnet/optimism/common/resolvers/DragonFruit.sol";
+import {DragonFruit} from "../../src/common/resolvers/DragonFruit.sol";
 
 contract DeployDragonFruit is Script {
     function run() external {
