@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {BaseConnector} from "../../common/utils/BaseConnector.sol";
+import {BaseConnector} from "./BaseConnector.sol";
 
 interface ISynthetix {
     function synths(bytes32 currencyKey) external view returns (ERC20);

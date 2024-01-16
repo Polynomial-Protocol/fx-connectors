@@ -5,7 +5,7 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
-import {BaseConnector} from "../../common/utils/BaseConnector.sol";
+import {BaseConnector} from "./BaseConnector.sol";
 
 interface ISpotMarket {
     function getSynth(uint128 marketId) external view returns (ERC20 synth);

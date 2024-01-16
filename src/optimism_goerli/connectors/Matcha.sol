@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
-import {BaseConnector} from "../../common/utils/BaseConnector.sol";
+import {BaseConnector} from "./BaseConnector.sol";
 
 interface IEmitter {
     function emitSwap(address from, address to, uint256 amt, uint256 minReceived, uint256 received) external;
