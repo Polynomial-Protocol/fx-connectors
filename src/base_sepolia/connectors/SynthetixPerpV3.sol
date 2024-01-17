@@ -50,7 +50,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
     uint256 public constant WAD = 1e18;
 
-    address private constant FEE_ADDR = 0x159c143eF9Be79d5672726150462C9EfA679b27c;
+    address private constant FEE_ADDR = address(bytes20(bytes("polynomial")));
 
     IPerpMarket public immutable perpMarket;
 
