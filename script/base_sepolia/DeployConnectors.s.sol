@@ -20,17 +20,17 @@ interface ISynthetix {
     function getPreferredPool() external view returns (uint128);
 }
 
-contract DeployResolvers is Script {
+contract DeployConnectors is Script {
     address constant connectorsAddr = 0xC891d76FED18B755Fe72FFf9ae738f8dA5DEEd16;
 
     // get from synthetix
-    address constant perpsMarketAddr = 0x0000000000000000000000000000000000000000;
-    address constant spotMarketAddr = 0x0000000000000000000000000000000000000000;
-    address constant susdAddr = 0x0000000000000000000000000000000000000000;
-    address constant usdcAddr = 0x0000000000000000000000000000000000000000;
-    address constant susdcAddr = 0x0000000000000000000000000000000000000000;
-    address constant pythNodeAddr = 0x0000000000000000000000000000000000000000;
-    address constant synthetixAddr = 0x0000000000000000000000000000000000000000;
+    address constant perpsMarketAddr = 0xE6C5f05C415126E6b81FCc3619f65Db2fCAd58D0;
+    address constant spotMarketAddr = 0xA4fE63F8ea9657990eA8E05Ebfa5C19a7D4d7337;
+    address constant susdAddr = 0xa89163A087fe38022690C313b5D4BBF12574637f;
+    address constant usdcAddr = 0x69980C3296416820623b3e3b30703A74e2320bC8;
+    address constant susdcAddr = 0x434Aa3FDb11798EDaB506D4a5e48F70845a66219;
+    address constant pythNodeAddr = 0xBf01fE835b3315968bbc094f50AE3164e6d3D969;
+    address constant synthetixAddr = 0xF4Df9Dd327Fd30695d478c3c8a2fffAddcdD0d31;
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -65,7 +65,7 @@ contract DeployResolvers is Script {
         names[4] = staking.name();
         addrs[4] = address(staking);
 
-        connectors.updateConnectors(names, addrs);
+        connectors.addConnectors(names, addrs);
         vm.stopBroadcast();
     }
 }

@@ -10,7 +10,7 @@ import {SynthetixPerpAccountsResolver} from "../../src/common/resolvers/Syntheti
 contract DeployResolvers is Script {
     address constant indexAddr = 0xF18C8a7C78b60D4b7EE00cBc1D5B62B643d03404;
     // get from synthetix
-    address constant snxPerpAccountAddr = 0x0000000000000000000000000000000000000000;
+    address constant snxPerpAccountAddr = 0x87f578681CDE29F0701E7274708E1A67Ee9eEf94;
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
