@@ -103,5 +103,8 @@
       "Synthetix-Perp-v3-v1.2": "0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2",
       "Synthetix-Spot-v3-v1": "0x93507224eaaad0572415b7241c3d8c0b66a2ece5"
     }
+  },
+  "base-sepolia": {
+    "storage": "0x0c7dbfa286734Da1E97589F2B131d828571e0067"
   }
 }
