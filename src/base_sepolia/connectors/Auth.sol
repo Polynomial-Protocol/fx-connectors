@@ -22,7 +22,7 @@ interface IList {
 
 contract AuthConnector is BaseConnector {
     string public constant name = "Auth-v1";
-    IList public constant list = IList(0xd567E18FDF8aFa58953DD8B0c1b6C97adF67566B);
+    IList public constant list = IList(0x89cd791Bf712673119cdA9ceCf7eAE1cc0C12d0c);
 
     function enable(address _auth) public payable returns (string memory _eventName, bytes memory _eventParam) {
         require(_auth != address(0), "Not-valid-authority");

@@ -103,5 +103,19 @@
       "Synthetix-Perp-v3-v1.2": "0x2BDC91973bfB5B16a5652520e3960Fd68D7be5C2",
       "Synthetix-Spot-v3-v1": "0x93507224eaaad0572415b7241c3d8c0b66a2ece5"
     }
+  },
+  "base-sepolia": {
+    "storage": "0x0c7dbfa286734Da1E97589F2B131d828571e0067",
+    "resolvers": {
+      "Accounts": "0x5586571262B428D07D1c1dD5910aC654fE3Ba8B5",
+      "SynthetixPerpAccounts": "0x572E8a1939E36f66bEa588c11b6587A1C36494a1"
+    },
+    "connectors": {
+      "Auth-v1": "0x5256450284f521c3A66CC2CcB7732629dC5df0E9",
+      "Basic-v1": "0x3FE3faeC1FFFBcdDe9E13806aEDa001756A163D9",
+      "Synthetix-Perp-v3-v1.2": "0x9A1c9A85214314eAb70ed34e0C8D3796b9A91955",
+      "Synthetix-Spot-v3-v1": "0x762E35e8B7068e723B05770b1C6Ee67abfc6734e",
+      "Synthetix-Staking-v1": "0xa61473ecF14652888F58ADe54Cc4772b4612e593"
+    }
   }
 }

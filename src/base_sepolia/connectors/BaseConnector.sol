@@ -7,7 +7,7 @@ interface IStorage {
 }
 
 abstract contract BaseConnector {
-    IStorage internal constant store = IStorage(0x0000000000000000000000000000000000000000);
+    IStorage internal constant store = IStorage(0x0c7dbfa286734Da1E97589F2B131d828571e0067);
 
     address internal constant ethAddr = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
