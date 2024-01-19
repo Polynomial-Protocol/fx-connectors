@@ -30,7 +30,7 @@ interface IPerpMarket {
 
     function commitOrder(OrderCommitmentRequest memory commitment) external;
 
-    function settlePythOrder(bytes calldata result, bytes calldata extraData) external payable;
+    function settleOrder(uint128 accountId) external payable;
 
     function getOpenPosition(uint128 accountId, uint128 marketId)
         external
@@ -216,17 +216,15 @@ contract SynthetixPerpV3Connector is BaseConnector {
         _eventParam = abi.encode(accountId, marketId, sizeDelta, acceptablePrice);
     }
 
-    function settleTrade(uint128 accountId, bytes memory updateData)
+    function settleTrade(uint128 accountId)
         public
         payable
         returns (string memory _eventName, bytes memory _eventParam)
     {
-        bytes memory extraData = abi.encode(accountId);
+        perpMarket.settleOrder(accountId);
 
-        perpMarket.settlePythOrder{value: msg.value}(updateData, extraData);
-
-        _eventName = "LogSettleTrade(uint128,bytes)";
-        _eventParam = abi.encode(accountId, updateData);
+        _eventName = "LogSettleTrade(uint128)";
+        _eventParam = abi.encode(accountId);
     }
 
     event LogUpdateOracle(bytes);
@@ -237,5 +235,5 @@ contract SynthetixPerpV3Connector is BaseConnector {
     event LogShort(uint128, uint128, int128, uint256, uint256, uint256);
     event LogCommitTrade(uint128, uint128, int128, uint256);
     event LogClose(uint128, uint128, uint256);
-    event LogSettleTrade(uint128, bytes);
+    event LogSettleTrade(uint128);
 }
