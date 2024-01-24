@@ -7,33 +7,9 @@ import {Initializable} from "../proxy/utils/Initializable.sol";
 import {AuthUpgradable, Authority} from "../libraries/AuthUpgradable.sol";
 import {ReentrancyGuardUpgradable} from "../libraries/ReentracyUpgradable.sol";
 
-interface IAccount {
-    function cast(string[] calldata _targetNames, bytes[] calldata _datas, address _origin) external;
-    function isAuth(address user) external view returns (bool);
-}
+import {IList, IPythNode, IPyth, IPerpMarket, IAccount} from "./SynthetixLimitOrdersV3.sol";
 
-interface IList {
-    function accountID(address) external view returns (uint64);
-}
-
-interface IPyth {
-    function getUpdateFee(bytes[] memory) external view returns (uint256);
-}
-
-interface IPythNode {
-    function pythAddress() external view returns (IPyth);
-    function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
-    function getLatestPrice(bytes32 priceId, uint256 stalenessTolerance) external view returns (int256);
-}
-
-interface IPerpMarket {
-    function getOpenPosition(uint128 accountId, uint128 marketId)
-        external
-        view
-        returns (int256 pnl, int256 accruedFunding, int128 positionSize);
-}
-
-contract SynthetixTwapOrders is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
+contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
     /// -----------------------------------------------------------------------
     /// Library usage
     /// -----------------------------------------------------------------------
@@ -204,6 +180,8 @@ contract SynthetixTwapOrders is Initializable, AuthUpgradable, ReentrancyGuardUp
         if (!_isCurrentTimeAcceptable(targetTimestamp, order.acceptableDeviation)) {
             revert UnacceptableTimeDeviation(targetTimestamp, order.acceptableDeviation, block.timestamp);
         }
+
+        _castSpells(orderId, order);
     }
 
     /**

@@ -559,8 +559,10 @@ contract SynthetixLimitOrdersV3Test is Test {
         placeOrder();
 
         vm.prank(someone);
-        vm.expectRevert(abi.encodeWithSelector(SynthetixLimitOrdersV3.NotAuthorized.selector, user, someone));
-        synthetixLimitOrders.cancelOrder(req, sig);
+        vm.expectRevert(
+            abi.encodeWithSelector(SynthetixLimitOrdersV3.NotAuthorized.selector, address(account), someone)
+        );
+        synthetixLimitOrders.cancelOrder(1);
     }
 
     function test_cancelOrderOnChain_success() external {
