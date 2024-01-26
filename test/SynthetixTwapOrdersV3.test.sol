@@ -178,14 +178,21 @@ contract SynthetixTwapOrdersV3Test is Test {
     /// Test - Cancel Order (offchain)
     /// -----------------------------------------------------------------------
 
-    function test_cancelOrderOffChain_byNonSigner() external {
+    function test_cancelOrderOffChain_byNonAuthorized() external {
         vm.prank(someone);
         vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.NotAuthorized.selector, user, someone));
         synthetixTwapOrders.cancelOrder(req, sig);
     }
 
-    function test_cancelOrderOffChain_success() external {
+    function test_cancelOrderOffChain_successBySigner() external {
         vm.prank(user);
+        synthetixTwapOrders.cancelOrder(req, sig);
+
+        assertEq(synthetixTwapOrders.cancelledHashes(keccak256(sig)), true);
+    }
+
+    function test_cancelOrderOffChain_successByUser() external {
+        vm.prank(address(account));
         synthetixTwapOrders.cancelOrder(req, sig);
 
         assertEq(synthetixTwapOrders.cancelledHashes(keccak256(sig)), true);

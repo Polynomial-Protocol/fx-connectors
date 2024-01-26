@@ -166,6 +166,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert InvalidPriceRange(req.price);
         }
 
+        if (req.size == 0) {
+            revert OrderSizeZero();
+        }
+
         if (block.timestamp > req.expiry) {
             revert OrderExpired(req.expiry, block.timestamp);
         }
@@ -218,6 +222,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert InvalidPriceRange(order.price);
         }
 
+        if (order.size == 0) {
+            revert OrderSizeZero();
+        }
+
         (bool isValid, uint256 currentPrice) = _isOrderValid(order.marketId, order.price);
 
         if (!isValid) {
@@ -239,6 +247,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         if (_isPriceValid(req.price)) {
             revert OrderNotExecuted(0);
+        }
+
+        if (req.size == 0) {
+            revert OrderSizeZero();
         }
 
         if (block.timestamp > req.expiry) {
@@ -316,6 +328,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert OrderNotExecuted(0);
         }
 
+        if (req.size == 0) {
+            revert OrderSizeZero();
+        }
+
         if (block.timestamp > req.expiry) {
             revert OrderExpired(req.expiry, block.timestamp);
         }
@@ -385,7 +401,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         bytes32 digest = keccak256(sig);
 
         address signer = _getSigner(req, sig);
-        if (msg.sender != signer) {
+        if (msg.sender != signer && msg.sender != req.user) {
             revert NotAuthorized(signer, msg.sender);
         }
 
@@ -729,6 +745,11 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param blockTimestamp block.timestamp
      */
     error OrderExpired(uint256 orderExpiry, uint256 blockTimestamp);
+
+    /**
+     * @notice Error when order size is 0
+     */
+    error OrderSizeZero();
 
     /**
      * @notice Length mismatch error

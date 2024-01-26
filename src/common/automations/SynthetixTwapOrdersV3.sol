@@ -193,7 +193,7 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
         bytes32 digest = keccak256(sig);
 
         address signer = _getSigner(req, sig);
-        if (msg.sender != signer) {
+        if (msg.sender != signer && msg.sender != req.user) {
             revert NotAuthorized(signer, msg.sender);
         }
 
