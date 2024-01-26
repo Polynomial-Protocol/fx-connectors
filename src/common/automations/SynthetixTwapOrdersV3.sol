@@ -24,11 +24,11 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
         uint128 accountId;
         uint128 marketId;
         int128 lotSize; // Size of each order
-        uint128 startTime; // 0 if on-chain order that starts now; actual start timestamp otherwise (offchain sig)
-        uint128 interval; // Interval between each order
-        uint128 totalIterations; // Total iterations
-        uint128 acceptableDeviation; // Acceptal deviation for interval
         uint128 slippage; // Calculate acceptable price from slippage and current price for v3
+        uint64 startTime; // 0 if on-chain order that starts now; actual start timestamp otherwise (offchain sig)
+        uint64 interval; // Interval between each order
+        uint64 totalIterations; // Total iterations
+        uint64 acceptableDeviation; // Acceptal deviation for interval
     }
 
     enum OrderStatus {
@@ -39,15 +39,15 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
 
     struct OrderRecord {
         OrderStatus status;
-        uint256 lastExecutionTimestamp;
         uint128 iterationsCompleted;
+        uint64 lastExecutionTimestamp;
     }
 
     bytes32 constant EIP712DOMAIN_TYPEHASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     bytes32 constant ORDER_REQUEST_TYPEHASH = keccak256(
-        "OrderRequest(address user,uint128 accountId,uint128 marketId,int128 lotSize,uint128 startTime,uint128 interval,uint128 totalIterations,uint128 acceptableDeviation,uint128 slippage)"
+        "OrderRequest(address user,uint128 accountId,uint128 marketId,int128 lotSize,uint128 slippage,uint64 startTime,uint64 interval,uint64 totalIterations,uint64 acceptableDeviation)"
     );
 
     uint256 public constant WAD = 1e18;
@@ -339,7 +339,7 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
     function _castSpells(uint256 orderId, OrderRequest memory req) internal {
         // effects
         records[orderId].iterationsCompleted += 1;
-        records[orderId].lastExecutionTimestamp = block.timestamp;
+        records[orderId].lastExecutionTimestamp = uint64(block.timestamp);
         if (req.totalIterations == records[orderId].iterationsCompleted) {
             records[orderId].status = OrderStatus.COMPLETED;
         }
@@ -400,11 +400,11 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
                 _req.accountId,
                 _req.marketId,
                 _req.lotSize,
+                _req.slippage,
                 _req.startTime,
                 _req.interval,
                 _req.totalIterations,
-                _req.acceptableDeviation,
-                _req.slippage
+                _req.acceptableDeviation
             )
         );
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, reqHash));

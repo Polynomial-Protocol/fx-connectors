@@ -20,7 +20,7 @@ contract SynthetixTwapOrdersV3Test is Test {
     bytes32 constant EIP712DOMAIN_TYPEHASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 constant ORDER_REQUEST_TYPEHASH = keccak256(
-        "OrderRequest(address user,uint128 accountId,uint128 marketId,int128 lotSize,uint128 startTime,uint128 interval,uint128 totalIterations,uint128 acceptableDeviation,uint128 slippage)"
+        "OrderRequest(address user,uint128 accountId,uint128 marketId,int128 lotSize,uint128 slippage,uint64 startTime,uint64 interval,uint64 totalIterations,uint64 acceptableDeviation)"
     );
     bytes32 DOMAIN_SEPARATOR;
 
@@ -41,10 +41,10 @@ contract SynthetixTwapOrdersV3Test is Test {
     uint128 accountId = 11;
     uint128 marketId = 22;
     int128 lotSize = 10;
-    uint128 startTime = 50000;
-    uint128 interval = 20000;
-    uint128 totalIterations = 3;
-    uint128 acceptableDeviation = 100;
+    uint64 startTime = 50000;
+    uint64 interval = 20000;
+    uint64 totalIterations = 3;
+    uint64 acceptableDeviation = 100;
     uint128 slippage = 0.1 ether;
 
     SynthetixTwapOrdersV3.OrderRecord record;
@@ -86,11 +86,11 @@ contract SynthetixTwapOrdersV3Test is Test {
             accountId,
             marketId,
             lotSize,
+            slippage,
             startTime,
             interval,
             totalIterations,
-            acceptableDeviation,
-            slippage
+            acceptableDeviation
         );
         sig = computeOrderRequestSign(req, userKey);
 
@@ -113,11 +113,11 @@ contract SynthetixTwapOrdersV3Test is Test {
                 request.accountId,
                 request.marketId,
                 request.lotSize,
+                request.slippage,
                 request.startTime,
                 request.interval,
                 request.totalIterations,
-                request.acceptableDeviation,
-                request.slippage
+                request.acceptableDeviation
             )
         );
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, reqHash));
@@ -135,10 +135,10 @@ contract SynthetixTwapOrdersV3Test is Test {
 
     function setTwapReq(
         int128 _lotSize,
-        uint128 _startTime,
-        uint128 _interval,
-        uint128 _totalIterations,
-        uint128 _acceptableDeviation,
+        uint64 _startTime,
+        uint64 _interval,
+        uint64 _totalIterations,
+        uint64 _acceptableDeviation,
         uint128 _slippage
     ) internal {
         req.lotSize = _lotSize;
@@ -269,7 +269,7 @@ contract SynthetixTwapOrdersV3Test is Test {
             assertEq(synthetixTwapOrders.submittedHashes(keccak256(sig)), true);
 
             /// @dev check record
-            (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) =
+            (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) =
                 synthetixTwapOrders.records(index + 1);
             assert(record.status == SynthetixTwapOrdersV3.OrderStatus.EXECUTING);
             assertEq(record.lastExecutionTimestamp, blockTimestamp);
@@ -289,7 +289,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         assertEq(synthetixTwapOrders.submittedHashes(keccak256(sig)), true);
 
         /// @dev check record
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.COMPLETED);
         assertEq(record.lastExecutionTimestamp, blockTimestamp);
         assertEq(record.iterationsCompleted, 1);
@@ -347,7 +347,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         assertEq(synthetixTwapOrders.nextOrderId(), 2);
 
         /// @dev check record
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.EXECUTING);
         assertEq(record.lastExecutionTimestamp, startTime);
         assertEq(record.iterationsCompleted, 1);
@@ -364,7 +364,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         assertEq(synthetixTwapOrders.nextOrderId(), 2);
 
         /// @dev check record
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.COMPLETED);
         assertEq(record.lastExecutionTimestamp, startTime);
         assertEq(record.iterationsCompleted, 1);
@@ -499,7 +499,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         vm.prank(someone);
         synthetixTwapOrders.executeOrder(1);
 
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.EXECUTING);
         assertEq(record.lastExecutionTimestamp, startTime + interval);
         assertEq(record.iterationsCompleted, 2);
@@ -508,7 +508,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         vm.prank(someone);
         synthetixTwapOrders.executeOrder(1);
 
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.COMPLETED);
         assertEq(record.lastExecutionTimestamp, startTime + 2 * interval);
         assertEq(record.iterationsCompleted, 3);
@@ -524,7 +524,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         vm.prank(someone);
         synthetixTwapOrders.executeOrder(1);
 
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.EXECUTING);
         assertEq(record.lastExecutionTimestamp, startTime + interval);
         assertEq(record.iterationsCompleted, 2);
@@ -533,7 +533,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         vm.prank(someone);
         synthetixTwapOrders.executeOrder(1);
 
-        (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) = synthetixTwapOrders.records(1);
+        (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) = synthetixTwapOrders.records(1);
         assert(record.status == SynthetixTwapOrdersV3.OrderStatus.COMPLETED);
         assertEq(record.lastExecutionTimestamp, startTime + 2 * interval);
         assertEq(record.iterationsCompleted, 3);
@@ -556,7 +556,7 @@ contract SynthetixTwapOrdersV3Test is Test {
             vm.prank(someone);
             synthetixTwapOrders.executeOrder(index + 1);
 
-            (record.status, record.lastExecutionTimestamp, record.iterationsCompleted) =
+            (record.status, record.iterationsCompleted, record.lastExecutionTimestamp) =
                 synthetixTwapOrders.records(index + 1);
             assert(record.status == SynthetixTwapOrdersV3.OrderStatus.EXECUTING);
             assertEq(record.lastExecutionTimestamp, blockTimestamp);
