@@ -120,11 +120,15 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
      */
     function placeOrder(OrderRequest memory req) external onlyScw nonReentrant {
         if (req.startTime != 0) {
-            revert InvalidOrder(req);
+            revert InvalidStartTime(req.startTime);
         }
 
         if (req.totalIterations == 0) {
-            revert InvalidOrder(req);
+            revert TotalIterationsZero();
+        }
+
+        if (req.lotSize == 0) {
+            revert LotSizeZero();
         }
 
         uint256 orderId = nextOrderId++;
@@ -140,7 +144,11 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
      */
     function executeOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
         if (req.totalIterations == 0) {
-            revert InvalidOrder(req);
+            revert TotalIterationsZero();
+        }
+
+        if (req.lotSize == 0) {
+            revert LotSizeZero();
         }
 
         bytes32 digest = keccak256(sig);
@@ -454,16 +462,26 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
     error InsufficientFee(uint256 required, uint256 fee);
 
     /**
-     * @notice Order is invalid due to startTime or totalIterations
-     * @param order Order request
+     * @notice Lot Size is zero
      */
-    error InvalidOrder(OrderRequest order);
+    error LotSizeZero();
+
+    /**
+     * @notice total iterations is zero
+     */
+    error TotalIterationsZero();
 
     /**
      * @notice Executing cancelled order
      * @param orderId ID of the order
      */
     error OrderCancelled(uint256 orderId);
+
+    /**
+     * @notice invalid start time for onchain order
+     * @param startTime start time in request
+     */
+    error InvalidStartTime(uint64 startTime);
 
     /**
      * @notice Order already completed
@@ -507,7 +525,9 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
      * @param orderId Order ID
      * @param iterationsCompleted how many lots completed
      */
-    event LotOrderExec(address indexed user, uint128 indexed marketId, uint256 orderId, uint128 iterationsCompleted);
+    event LotOrderExec(
+        address indexed user, uint128 indexed marketId, uint256 indexed orderId, uint128 iterationsCompleted
+    );
 
     /**
      * @notice Emitted when the order is cancelled

@@ -205,7 +205,16 @@ contract SynthetixTwapOrdersV3Test is Test {
     function test_executeOrderOffChain_withInvalidTotalIterations() external {
         setTwapReq(lotSize, startTime, interval, 0, acceptableDeviation, slippage);
         vm.prank(someone);
-        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.InvalidOrder.selector, req));
+        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.TotalIterationsZero.selector));
+        synthetixTwapOrders.executeOrder(req, sig);
+    }
+
+    function test_executeOrderOffChain_withLotSizeZero() external {
+        setTwapReq(0, startTime, interval, startTime, acceptableDeviation, slippage);
+        vm.warp(startTime);
+
+        vm.prank(someone);
+        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.LotSizeZero.selector));
         synthetixTwapOrders.executeOrder(req, sig);
     }
 
@@ -331,7 +340,15 @@ contract SynthetixTwapOrdersV3Test is Test {
         setTwapReq(lotSize, startTime, interval, totalIterations, acceptableDeviation, slippage);
 
         vm.prank(address(account));
-        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.InvalidOrder.selector, req));
+        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.InvalidStartTime.selector, req.startTime));
+        synthetixTwapOrders.placeOrder(req);
+    }
+
+    function test_placeOrder_withZeroLotSize() external {
+        setTwapReq(0, 0, interval, totalIterations, acceptableDeviation, slippage);
+
+        vm.prank(address(account));
+        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.LotSizeZero.selector));
         synthetixTwapOrders.placeOrder(req);
     }
 
@@ -339,7 +356,7 @@ contract SynthetixTwapOrdersV3Test is Test {
         setTwapReq(lotSize, 0, interval, 0, acceptableDeviation, slippage);
 
         vm.prank(address(account));
-        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.InvalidOrder.selector, req));
+        vm.expectRevert(abi.encodeWithSelector(SynthetixTwapOrdersV3.TotalIterationsZero.selector));
         synthetixTwapOrders.placeOrder(req);
     }
 
