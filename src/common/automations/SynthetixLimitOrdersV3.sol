@@ -507,7 +507,12 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 : OrderStatus.COMPLETED;
         } else {
             (,, int128 currentPosition) = perpMarket.getOpenPosition(req.accountId, req.marketId);
-            int128 sizeDelta = req.size > currentPosition ? -currentPosition : -req.size;
+
+            (bool compatible, int128 sizeDelta) = _checkAndGetTpSlDelta(req.size, currentPosition);
+            if (!compatible) {
+                revert PositionChangedDirection(req.size, currentPosition);
+            }
+
             uint256 acceptablePrice =
                 execType == ExecutionType.STOP_LOSS ? req.slPrice.acceptablePrice : req.tpPrice.acceptablePrice;
 
@@ -648,6 +653,28 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         return true;
     }
 
+    function _checkAndGetTpSlDelta(int128 requestSize, int128 openPosition)
+        internal
+        pure
+        returns (bool compatible, int128 sizeDelta)
+    {
+        if (!_sameSign(requestSize, openPosition)) {
+            compatible = false;
+            return (compatible, sizeDelta);
+        }
+
+        compatible = true;
+        sizeDelta = (_signedAbs(requestSize) > _signedAbs(openPosition)) ? -openPosition : -requestSize;
+    }
+
+    function _signedAbs(int128 x) internal pure returns (int128) {
+        return x < 0 ? -x : x;
+    }
+
+    function _sameSign(int128 a, int128 b) internal pure returns (bool) {
+        return (a != 0) && (b != 0) && (a > 0) == (b > 0);
+    }
+
     /// -----------------------------------------------------------------------
     /// Modifiers
     /// -----------------------------------------------------------------------
@@ -738,6 +765,13 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param currentPrice Current price
      */
     error PriceNotInRange(uint256 priceA, uint256 priceB, uint256 currentPrice);
+
+    /**
+     * @notice Error when position direction and requestsize direction do not match in tp/sl
+     * @param requestSize requestSize
+     * @param position position
+     */
+    error PositionChangedDirection(int128 requestSize, int128 position);
 
     /**
      * @notice Error when order's expiry timestamp has passed
