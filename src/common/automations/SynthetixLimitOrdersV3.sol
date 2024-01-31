@@ -151,9 +151,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      */
     function placeOrder(OrderRequest memory req) external onlyScw {
-        orders[nextOrderId++] = req;
+        uint256 orderId = nextOrderId++;
+        orders[orderId] = req;
 
-        emit OrderPlaced(req.user, req.marketId, nextOrderId - 1, req);
+        if (!_isPriceValid(req.price)) {
+            status[orderId] = OrderStatus.EXECUTED;
+        }
+
+        emit OrderPlaced(req.user, req.marketId, orderId, req);
     }
 
     /**
@@ -216,10 +221,6 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         if (status[orderId] == OrderStatus.COMPLETED) {
             revert OrderCompleted(orderId);
-        }
-
-        if (!_isPriceValid(order.price)) {
-            revert InvalidPriceRange(order.price);
         }
 
         if (order.size == 0) {
