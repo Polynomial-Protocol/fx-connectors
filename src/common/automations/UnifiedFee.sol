@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {Auth, Authority} from "solmate/auth/Auth.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
-import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {Initializable} from "../proxy/utils/Initializable.sol";
+import {AuthUpgradable, Authority} from "../libraries/AuthUpgradable.sol";
+import {ReentrancyGuardUpgradable} from "../libraries/ReentracyUpgradable.sol";
 
 interface IList {
     function accountID(address) external view returns (uint64);
@@ -27,7 +28,7 @@ interface IChainLink {
     function latestAnswer() external view returns (int256);
 }
 
-contract UnifiedFee is Auth, ReentrancyGuard {
+contract UnifiedFee is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
     /// -----------------------------------------------------------------------
     /// Library usage
     /// -----------------------------------------------------------------------
@@ -59,6 +60,9 @@ contract UnifiedFee is Auth, ReentrancyGuard {
     /// @notice Chainlink ETH Oracle
     IChainLink public immutable chainLink;
 
+    /// @notice Decimals of usdc
+    uint256 public immutable usdcDecimals;
+
     /// @notice Pending amount to withdraw from contract
     uint256 public pendingAmount;
 
@@ -66,12 +70,18 @@ contract UnifiedFee is Auth, ReentrancyGuard {
     mapping(address => int256) public depositedBalances;
 
     /// @notice Action costs
-    mapping(bytes32 => Cost) public costs;
+    mapping(uint64 => Cost) public costs;
 
-    constructor(address _usdc, address _list, address _chainLink) Auth(msg.sender, Authority(address(0x0))) {
+    constructor(address _usdc, address _list, address _chainLink) {
         usdc = ERC20(_usdc);
         list = IList(_list);
         chainLink = IChainLink(_chainLink);
+        usdcDecimals = usdc.decimals();
+    }
+
+    function initialize(address _owner) public initializer {
+        _auth_init(_owner, Authority(address(0x0)));
+        _reentrancy_init();
     }
 
     /// -----------------------------------------------------------------------
@@ -86,7 +96,7 @@ contract UnifiedFee is Auth, ReentrancyGuard {
         depositedBalances[msg.sender] = newBalance;
     }
 
-    function claim(bytes32[] memory _actions) external onlyScw {
+    function claim(uint64[] memory _actions) external onlyScw {
         uint256 totalL1Units;
         uint256 totalL2Units;
 
@@ -106,11 +116,12 @@ contract UnifiedFee is Auth, ReentrancyGuard {
         uint256 costOfExecutionGrossEth =
             ((((totalL1Units + overhead) * l1BaseFee * scalar) / 10 ** decimals) + (totalL2Units * gasPriceL2));
 
-        int256 ethPrice = chainLink.latestAnswer();
+        int256 ethPrice = chainLink.latestAnswer(); // Chainlink is in 8 decimals
 
         uint256 ethPriceWad = uint256(ethPrice) * (10 ** 10);
 
         uint256 totalCost = ethPriceWad.mulWadDown(costOfExecutionGrossEth);
+        totalCost = _getUsdcAmount(totalCost);
 
         depositedBalances[msg.sender] -= int256(totalCost);
         pendingAmount += totalCost;
@@ -120,7 +131,7 @@ contract UnifiedFee is Auth, ReentrancyGuard {
     /// Admin Actions
     /// -----------------------------------------------------------------------
 
-    function setCosts(bytes32[] memory _actions, Cost[] memory _costs) external requiresAuth {
+    function setCosts(uint64[] memory _actions, Cost[] memory _costs) external requiresAuth {
         require(_actions.length == _costs.length);
 
         for (uint256 i = 0; i < _actions.length; i++) {
@@ -131,6 +142,24 @@ contract UnifiedFee is Auth, ReentrancyGuard {
     function sweep(address to) external requiresAuth {
         usdc.safeTransfer(to, pendingAmount);
         pendingAmount = 0;
+    }
+
+    /// -----------------------------------------------------------------------
+    /// Internals
+    /// -----------------------------------------------------------------------
+
+    function _getUsdcAmount(uint256 amount) internal view returns (uint256 wadAmount) {
+        if (usdcDecimals == 18) {
+            return amount;
+        }
+
+        if (usdcDecimals > 18) {
+            uint256 multiplier = 10 ** (usdcDecimals - 18);
+            wadAmount = amount * multiplier;
+        } else {
+            uint256 divider = 10 ** (18 - usdcDecimals);
+            wadAmount = amount / divider;
+        }
     }
 
     /// -----------------------------------------------------------------------

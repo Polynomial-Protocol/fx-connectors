@@ -102,6 +102,12 @@
       "Synthetix-Perp-v3-v1.1": "0xeD420cCF32Eb598c4CFBC36adCebdDaC2807b615",
       "Synthetix-Perp-v3-v1.2": "0x1955A280F0F06A4329ce548f8DE0c5482bfaa04a",
       "Synthetix-Spot-v3-v1": "0x93507224eaaad0572415b7241c3d8c0b66a2ece5"
+    },
+    "automations": {
+      "UnifiedFee": {
+        "proxy": "0xC33897fa2693D40A6Cad2B11c3e0792D305BBa92",
+        "implementation": "0x3921F7dB4B36886e8a452A25f9232D460E04c782"
+      }
     }
   },
   "base-sepolia": {
