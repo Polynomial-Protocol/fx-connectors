@@ -101,7 +101,8 @@
       "Synthetix-Perp-v3-v1": "0xdBCccd42ebd71b903D05f797245bA0500E4d3Fc0",
       "Synthetix-Perp-v3-v1.1": "0xeD420cCF32Eb598c4CFBC36adCebdDaC2807b615",
       "Synthetix-Perp-v3-v1.2": "0x1955A280F0F06A4329ce548f8DE0c5482bfaa04a",
-      "Synthetix-Spot-v3-v1": "0x93507224eaaad0572415b7241c3d8c0b66a2ece5"
+      "Synthetix-Spot-v3-v1": "0x93507224eaaad0572415b7241c3d8c0b66a2ece5",
+      "Fee-v1": "0x6AC738B02D80e730d514B2D08281c6e20ce6ee8e"
     },
     "automations": {
       "UnifiedFee": {
