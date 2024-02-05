@@ -123,6 +123,12 @@
       "Synthetix-Perp-v3-v1.2": "0x9A1c9A85214314eAb70ed34e0C8D3796b9A91955",
       "Synthetix-Spot-v3-v1": "0x762E35e8B7068e723B05770b1C6Ee67abfc6734e",
       "Synthetix-Staking-v1": "0xa61473ecF14652888F58ADe54Cc4772b4612e593"
+    },
+    "automations": {
+      "SynthetixLimitOrdersV3": {
+        "proxy": "0xf20E2ed5cf876C8E25996D2dAB9DDe51D682DfE6",
+        "implementation": "0x6E951c8ba489ef2aAA862dc76Aa80f07e3DE7097"
+      }
     }
   }
 }
