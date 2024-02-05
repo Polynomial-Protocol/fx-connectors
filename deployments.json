@@ -128,6 +128,10 @@
       "SynthetixLimitOrdersV3": {
         "proxy": "0xf20E2ed5cf876C8E25996D2dAB9DDe51D682DfE6",
         "implementation": "0x6E951c8ba489ef2aAA862dc76Aa80f07e3DE7097"
+      },
+      "SynthetixTwapOrdersV3": {
+        "proxy": "0x94161a4f4b2fa7d2a4b02cefb307415ac424cdb2",
+        "implementation": "0xc9d9e386d087506d081f7fb005841de131a546af"
       }
     }
   }
