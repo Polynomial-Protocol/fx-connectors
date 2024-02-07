@@ -50,7 +50,7 @@
     "connectors": {
       "Auth-v1": "0x9ed8932C266D46535123934c80c9E69fE214FABd",
       "Basic-v1": "0x1D7D81A928554467f25531CF056A42C1B2603F1E",
-      "Synthetix-Spot-v1": "0x109c59422A74Bb380EF3ab40C816D4153747e445..",
+      "Synthetix-Spot-v1": "0x0310ade9aED23770a22DDfC72158E65982328488",
       "Synthetix-Perp-v3-v1.2": "0x3ba6A43ebf48520ea099ab07b411974f8494B390"
     },
     "resolvers": {
