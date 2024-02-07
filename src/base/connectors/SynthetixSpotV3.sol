@@ -177,13 +177,24 @@ contract SynthetixSpotV3Connector is BaseConnector {
 
         (uint256 synthAmount,) = spotMarket.buy(marketId, _unwrapAmount, _unwrapAmount, referrer);
 
-        (uint256 returnCollateralAmount,) = spotMarket.unwrap(marketId, synthAmount, synthAmount);
+        (uint256 returnCollateralAmount,) =
+            spotMarket.unwrap(marketId, synthAmount, _getAmtInDecimals(synthAmount, USDC.decimals()));
 
         setUint(setId, returnCollateralAmount);
         setUint(setId, 0);
 
         _eventName = "LogUnWrapUSDC(uint128,uint256)";
         _eventParam = abi.encode(marketId, unwrapAmount);
+    }
+
+    function _getAmtInDecimals(uint256 amt, uint8 decimals) internal pure returns (uint256 _amt) {
+        if (decimals >= 0) {
+            uint256 multiplier = 10 ** (decimals - 18);
+            _amt = amt * multiplier;
+        } else {
+            uint256 divider = 10 ** (18 - decimals);
+            _amt = amt / divider;
+        }
     }
 
     event LogBuy(uint128 marketId, uint256 usdAmount, uint256 minAmountReceived, uint256 getId, uint256 setId);
