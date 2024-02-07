@@ -50,7 +50,7 @@
     "connectors": {
       "Auth-v1": "0x9ed8932C266D46535123934c80c9E69fE214FABd",
       "Basic-v1": "0x1D7D81A928554467f25531CF056A42C1B2603F1E",
-      "Synthetix-Spot-v1": "0x0310ade9aED23770a22DDfC72158E65982328488..",
+      "Synthetix-Spot-v1": "0x0310ade9aED23770a22DDfC72158E65982328488",
       "Synthetix-Perp-v3-v1.2": "0x3ba6A43ebf48520ea099ab07b411974f8494B390"
     },
     "resolvers": {
@@ -121,8 +121,18 @@
       "Auth-v1": "0x5256450284f521c3A66CC2CcB7732629dC5df0E9",
       "Basic-v1": "0x3FE3faeC1FFFBcdDe9E13806aEDa001756A163D9",
       "Synthetix-Perp-v3-v1.2": "0x9A1c9A85214314eAb70ed34e0C8D3796b9A91955",
-      "Synthetix-Spot-v3-v1": "0x762E35e8B7068e723B05770b1C6Ee67abfc6734e",
+      "Synthetix-Spot-v3-v1": "0x44924f4E749Fb81e1b919ACFC72e75125e1aAE40",
       "Synthetix-Staking-v1": "0xa61473ecF14652888F58ADe54Cc4772b4612e593"
+    },
+    "automations": {
+      "SynthetixLimitOrdersV3": {
+        "proxy": "0xf20E2ed5cf876C8E25996D2dAB9DDe51D682DfE6",
+        "implementation": "0x6E951c8ba489ef2aAA862dc76Aa80f07e3DE7097"
+      },
+      "SynthetixTwapOrdersV3": {
+        "proxy": "0x94161a4f4b2fa7d2a4b02cefb307415ac424cdb2",
+        "implementation": "0xc9d9e386d087506d081f7fb005841de131a546af"
+      }
     }
   }
 }

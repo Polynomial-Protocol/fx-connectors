@@ -158,7 +158,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             status[orderId] = OrderStatus.EXECUTED;
         }
 
-        emit OrderPlaced(req.user, req.marketId, orderId, req);
+        emit OrderPlaced(req.user, req.marketId, orderId, req, "");
     }
 
     /**
@@ -548,9 +548,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         }
 
         orders[nextOrderId++] = req;
-        submittedHashes[keccak256(sig)] = true;
+        bytes32 digest = keccak256(sig);
 
-        emit OrderPlaced(req.user, req.marketId, nextOrderId - 1, req);
+        submittedHashes[digest] = true;
+        emit OrderPlaced(req.user, req.marketId, nextOrderId - 1, req, digest);
     }
 
     /**
@@ -802,7 +803,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param orderId Order ID
      * @param req Order request
      */
-    event OrderPlaced(address indexed user, uint128 indexed marketId, uint256 orderId, OrderRequest req);
+    event OrderPlaced(
+        address indexed user, uint128 indexed marketId, uint256 orderId, OrderRequest req, bytes32 digest
+    );
 
     /**
      * @notice Emitted when the order is executed
