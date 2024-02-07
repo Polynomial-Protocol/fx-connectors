@@ -188,7 +188,7 @@ contract SynthetixSpotV3Connector is BaseConnector {
     }
 
     function _getAmtInDecimals(uint256 amt, uint8 decimals) internal pure returns (uint256 _amt) {
-        if (decimals >= 0) {
+        if (decimals >= 18) {
             uint256 multiplier = 10 ** (decimals - 18);
             _amt = amt * multiplier;
         } else {
