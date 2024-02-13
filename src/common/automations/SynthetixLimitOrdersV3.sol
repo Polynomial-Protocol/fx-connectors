@@ -197,7 +197,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(req.price.priceA, req.price.priceB, currentPrice);
         }
 
-        _castSpells(nextOrderId - 1, req, ExecutionType.LIMIT_ORDER);
+        _castSpells(nextOrderId - 1, req, ExecutionType.LIMIT_ORDER, currentPrice);
     }
 
     /**
@@ -233,7 +233,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(order.price.priceA, order.price.priceB, currentPrice);
         }
 
-        _castSpells(orderId, order, ExecutionType.LIMIT_ORDER);
+        _castSpells(orderId, order, ExecutionType.LIMIT_ORDER, currentPrice);
     }
 
     /**
@@ -276,7 +276,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(req.tpPrice.priceA, req.tpPrice.priceB, currentPrice);
         }
 
-        _castSpells(nextOrderId - 1, req, ExecutionType.TAKE_PROFIT);
+        _castSpells(nextOrderId - 1, req, ExecutionType.TAKE_PROFIT, currentPrice);
     }
 
     /**
@@ -312,7 +312,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(order.tpPrice.priceA, order.tpPrice.priceB, currentPrice);
         }
 
-        _castSpells(orderId, order, ExecutionType.TAKE_PROFIT);
+        _castSpells(orderId, order, ExecutionType.TAKE_PROFIT, currentPrice);
     }
 
     /**
@@ -355,7 +355,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(req.slPrice.priceA, req.slPrice.priceB, currentPrice);
         }
 
-        _castSpells(nextOrderId - 1, req, ExecutionType.STOP_LOSS);
+        _castSpells(nextOrderId - 1, req, ExecutionType.STOP_LOSS, currentPrice);
     }
 
     /**
@@ -391,7 +391,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert PriceNotInRange(order.slPrice.priceA, order.slPrice.priceB, currentPrice);
         }
 
-        _castSpells(orderId, order, ExecutionType.STOP_LOSS);
+        _castSpells(orderId, order, ExecutionType.STOP_LOSS, currentPrice);
     }
 
     /**
@@ -488,7 +488,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      * @param execType Type of order to execute
      */
-    function _castSpells(uint256 orderId, OrderRequest memory req, ExecutionType execType) internal {
+    function _castSpells(uint256 orderId, OrderRequest memory req, ExecutionType execType, uint256 currentPrice)
+        internal
+    {
         string[] memory targetNames = new string[](1);
         bytes[] memory datas = new bytes[](1);
 
@@ -526,7 +528,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         IAccount(req.user).cast(targetNames, datas, address(this));
 
-        emit OrderExec(req.user, req.marketId, orderId, execType);
+        emit OrderExec(req.user, req.marketId, orderId, execType, currentPrice, 0);
     }
 
     /**
@@ -813,8 +815,17 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param marketId Market ID
      * @param orderId Order ID
      * @param execType Order request
+     * @param executionPrice price of asset during execution
+     * @param totalFee total fee from this execution
      */
-    event OrderExec(address indexed user, uint128 indexed marketId, uint256 orderId, ExecutionType execType);
+    event OrderExec(
+        address indexed user,
+        uint128 indexed marketId,
+        uint256 orderId,
+        ExecutionType execType,
+        uint256 executionPrice,
+        uint256 totalFee
+    );
 
     /**
      * @notice Emitted when the order is cancelled
