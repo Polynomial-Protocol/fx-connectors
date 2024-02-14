@@ -42,6 +42,10 @@ interface IPythNode {
     function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
 }
 
+interface IAccountModule {
+    function balanceOf(address scw) external returns(uint256);
+}
+
 contract SynthetixPerpV3Connector is BaseConnector {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
@@ -59,12 +63,15 @@ contract SynthetixPerpV3Connector is BaseConnector {
     ERC20 public immutable sUSD;
 
     IPythNode public immutable pythNode;
-
-    constructor(address _perpMarket, address _spotMarket, address _susd, address _pythNode) {
+    
+    IAccountModule public immutable accountModule;
+    
+    constructor(address _perpMarket, address _spotMarket, address _accountModule, address _susd, address _pythNode) {
         perpMarket = IPerpMarket(_perpMarket);
         spotMarket = ISpotMarket(_spotMarket);
         sUSD = ERC20(_susd);
         pythNode = IPythNode(_pythNode);
+        accountModule = IAccountModule(_accountModule);
     }
 
     function updateOracle(bytes memory oracleData)
@@ -79,6 +86,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
     }
 
     function createAccount(uint128 id) public payable returns (string memory _eventName, bytes memory _eventParam) {
+        require(accountModule.balanceOf(address(this)) == 0, "Account already exists");
         perpMarket.createAccount(id);
 
         _eventName = "LogCreateAccount(uint128)";
