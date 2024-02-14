@@ -26,13 +26,13 @@ contract UpdateSpotV3 is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         IConnectors connectors = IConnectors(connector);
-        SynthetixPerpV3Connector spotV3 = new SynthetixPerpV3Connector(perpMarket, spotMarket, accountModule, susd, pythNode);
+        SynthetixPerpV3Connector perpV3 = new SynthetixPerpV3Connector(perpMarket, spotMarket, accountModule, susd, pythNode);
 
         string[] memory names = new string[](1);
         address[] memory addrs = new address[](1);
 
-        names[0] = spotV3.name();
-        addrs[0] = address(spotV3);
+        names[0] = perpV3.name();
+        addrs[0] = address(perpV3);
 
         connectors.updateConnectors(names, addrs);
 
