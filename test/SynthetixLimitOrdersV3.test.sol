@@ -219,6 +219,17 @@ contract SynthetixLimitOrdersV3Test is Test {
         assert(synthetixLimitOrders.status(1) == SynthetixLimitOrdersV3.OrderStatus.SUBMITTED);
     }
 
+    function test_placeOrder_withDifferentSCW() external {
+        IAccount account2 = new MockIAccount();
+
+        setPrices(1, 2, 0);
+        vm.prank(address(account2));
+        vm.expectRevert(
+            abi.encodeWithSelector(SynthetixLimitOrdersV3.NotAuthorized.selector, address(account), address(account2))
+        );
+        synthetixLimitOrders.placeOrder(req);
+    }
+
     function test_placeOrder_withInvalidPrice() external {
         uint256[3] memory priceAs = [uint256(0), 1, 2];
         uint256[3] memory priceBs = [uint256(1), 0, 1];

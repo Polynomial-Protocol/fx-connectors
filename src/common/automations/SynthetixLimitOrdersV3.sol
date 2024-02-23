@@ -154,6 +154,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         uint256 orderId = nextOrderId++;
         orders[orderId] = req;
 
+        if (req.user != msg.sender) {
+            revert NotAuthorized(req.user, msg.sender);
+        }
+
         if (!_isPriceValid(req.price)) {
             status[orderId] = OrderStatus.EXECUTED;
         }
