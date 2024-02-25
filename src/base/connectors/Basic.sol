@@ -67,6 +67,10 @@ contract BasicConnector is BaseConnector {
         _eventName = "LogWithdraw(address,uint256,address,uint256,uint256)";
         _eventParam = abi.encode(token, _amt, to, getId, setId);
     }
+    
+    function permit(address token, address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
+        ERC20(token).permit(owner, spender, value, deadline, v, r, s);
+    }
 
     event LogDeposit(address indexed erc20, uint256 tokenAmt, uint256 getId, uint256 setId);
     event LogWithdraw(address indexed erc20, uint256 tokenAmt, address indexed to, uint256 getId, uint256 setId);
