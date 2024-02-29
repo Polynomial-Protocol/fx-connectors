@@ -137,7 +137,7 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 keccak256(bytes("Polynomial Limit Orders")),
                 keccak256(bytes("3")),
                 block.chainid,
-                msg.sender
+                address(this)
             )
         );
         nextOrderId = 1;

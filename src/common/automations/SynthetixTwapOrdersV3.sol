@@ -104,7 +104,7 @@ contract SynthetixTwapOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuard
                 keccak256(bytes("Polynomial Twap Orders")),
                 keccak256(bytes("3")),
                 block.chainid,
-                msg.sender
+                address(this)
             )
         );
 
