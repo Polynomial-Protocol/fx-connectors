@@ -126,12 +126,12 @@
     },
     "automations": {
       "SynthetixLimitOrdersV3": {
-        "proxy": "0xf20E2ed5cf876C8E25996D2dAB9DDe51D682DfE6",
-        "implementation": "0xB4311adAD2BB08F668a16b9882E48D0f342B7a3D"
+        "proxy": "0x7b501b9259bde29931cFc85F38B2d768939B3e40",
+        "implementation": "0x6BEb0658795A45A046D0330c4Bc0FAac4F0265aF"
       },
       "SynthetixTwapOrdersV3": {
-        "proxy": "0x94161a4f4b2fa7d2a4b02cefb307415ac424cdb2",
-        "implementation": "0xc9d9e386d087506d081f7fb005841de131a546af"
+        "proxy": "0x907fe6b80009B747ea2FA7D2663e969d9754c94f",
+        "implementation": "0x341b306C20b1bd36014685C57862DccF6a0Fc737"
       }
     }
   }
