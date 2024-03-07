@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC721} from "solmate/tokens/ERC721.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 
@@ -50,7 +51,7 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
     uint256 public constant WAD = 1e18;
 
-    address private constant FEE_ADDR = address(bytes20(bytes("polynomial")));
+    address private constant FEE_ADDR = 0x159c143eF9Be79d5672726150462C9EfA679b27c;
 
     IPerpMarket public immutable perpMarket;
 
@@ -58,13 +59,16 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
     ERC20 public immutable sUSD;
 
+    ERC721 public immutable accountNFT;
+
     IPythNode public immutable pythNode;
 
-    constructor(address _perpMarket, address _spotMarket, address _susd, address _pythNode) {
+    constructor(address _perpMarket, address _spotMarket, address _susd, address _pythNode, address _accountNFT) {
         perpMarket = IPerpMarket(_perpMarket);
         spotMarket = ISpotMarket(_spotMarket);
         sUSD = ERC20(_susd);
         pythNode = IPythNode(_pythNode);
+        accountNFT = ERC721(_accountNFT);
     }
 
     function updateOracle(bytes memory oracleData)
@@ -76,6 +80,17 @@ contract SynthetixPerpV3Connector is BaseConnector {
 
         _eventName = "LogUpdateOracle(bytes)";
         _eventParam = abi.encode(oracleData);
+    }
+
+    function transferAccount(uint256 accountId, address target)
+        public
+        payable
+        returns (string memory _eventName, bytes memory _eventParam)
+    {
+        accountNFT.safeTransferFrom(address(this), target, accountId);
+
+        _eventName = "LogTransferAccount(uint256,address)";
+        _eventParam = abi.encode(accountId, target);
     }
 
     function createAccount(uint128 id) public payable returns (string memory _eventName, bytes memory _eventParam) {
@@ -238,4 +253,5 @@ contract SynthetixPerpV3Connector is BaseConnector {
     event LogCommitTrade(uint128, uint128, int128, uint256);
     event LogClose(uint128, uint128, uint256);
     event LogSettleTrade(uint128, bytes);
+    event LogTransferAccount(uint256, address);
 }

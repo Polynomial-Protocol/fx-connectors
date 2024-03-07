@@ -5,7 +5,6 @@ pragma solidity ^0.8.9;
  * @title FxStorage.
  * @dev Store Data For Cast Function.
  */
-
 contract FxStorage {
     // Memory Bytes (Smart Account Address => Storage ID => Bytes).
     mapping(address => mapping(uint256 => bytes32)) internal mbytes; // Use it to store execute data and delete in the same transaction

@@ -42,7 +42,7 @@ contract DeployConnectors is Script {
         AuthConnector auth = new AuthConnector();
         BasicConnector basic = new BasicConnector();
         SynthetixPerpV3Connector perpV3 =
-            new SynthetixPerpV3Connector(perpsMarketAddr, spotMarketAddr, susdAddr, pythNodeAddr);
+            new SynthetixPerpV3Connector(perpsMarketAddr, spotMarketAddr, susdAddr, pythNodeAddr, address(0x0));
         SynthetixSpotV3Connector spotV3 = new SynthetixSpotV3Connector(spotMarketAddr, susdAddr, usdcAddr);
         SynthetixStakingConnector staking =
             new SynthetixStakingConnector(synthetixAddr, spotMarketAddr, susdcAddr, usdcAddr, preferredPool);
