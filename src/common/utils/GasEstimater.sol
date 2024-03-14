@@ -22,6 +22,14 @@ interface GasPriceOracle {
     function getL1Fee(bytes memory _data) external view returns (uint256);
 
     function getL1GasUsed(bytes memory _data) external view returns (uint256);
+
+    function baseFee() external view returns (uint256);
+
+    function baseFeeScalar() external view returns (uint32);
+
+    function blobBaseFeeScalar() external view returns (uint32);
+
+    function blobBaseFee() external view returns (uint256);
 }
 
 interface ExchangeRates {
@@ -59,14 +67,16 @@ contract GasEstimater is Initializable, AuthUpgradable {
         (uint256 price, bool invalid) = exchangeRates.rateAndInvalid("ETH");
         require(!invalid, "Invalid price");
 
-        uint256 gasPriceL2 = GAS_PRICE_ORACLE.gasPrice();
-        uint256 overhead = GAS_PRICE_ORACLE.overhead();
+        uint256 gasPriceL2 = GAS_PRICE_ORACLE.baseFee();
+        uint256 baseFeeScalar = GAS_PRICE_ORACLE.baseFeeScalar();
         uint256 l1BaseFee = GAS_PRICE_ORACLE.l1BaseFee();
+        uint256 blobBaseFeeScalar = GAS_PRICE_ORACLE.blobBaseFeeScalar();
+        uint256 blobBaseFee = GAS_PRICE_ORACLE.blobBaseFee();
         uint256 decimals = GAS_PRICE_ORACLE.decimals();
-        uint256 scalar = GAS_PRICE_ORACLE.scalar();
 
-        uint256 costOfExecutionGrossEth =
-            ((((_gasUnitsL1 + overhead) * l1BaseFee * scalar) / 10 ** decimals) + (_gasUnitsL2 * gasPriceL2));
+        uint256 l1GasPrice = (baseFeeScalar * l1BaseFee * 16 + blobBaseFeeScalar * blobBaseFee) / (16 * 10 ** decimals);
+
+        uint256 costOfExecutionGrossEth = ((_gasUnitsL1 * l1GasPrice) + (_gasUnitsL2 * gasPriceL2));
         uint256 costOfExecutionGross = costOfExecutionGrossEth * price / 1e18;
 
         return min(_minKeeperFeeUpperBound, max(_minKeeperFeeLowerBound, costOfExecutionGross));

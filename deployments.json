@@ -25,7 +25,7 @@
         "implementation": "0xDE16Ce9ae3C6D788Ca6De1e19E6bC6aE81e0630b"
       },
       "Boomerang": "0x1BAA02FD3744b299723f2e3ad2b7C241Bea1afA5",
-      "DragonFruit": "0xef0868F755d4F94A8b11C20A5beF8B86804e9B3e",
+      "DragonFruit": "0xfFb60DB01EcAccaf30517664F90936F3147Ba8F6",
       "BellPepper": "0x6457f43CAa86008c595b037061788068bFD5e58d"
     },
     "automations": {
@@ -42,7 +42,7 @@
     },
     "utils": {
       "emitter": "0x0Be3A0E2944b1C43799E2d447d1367A397c4F573",
-      "gasEstimater": "0x3A3482992A37cdf2015FF6EFB90504911d3DFB38"
+      "gasEstimater": "0x50e6B62979Fd23FB59F542065a2cAc5Cd6499527"
     }
   },
   "base": {
