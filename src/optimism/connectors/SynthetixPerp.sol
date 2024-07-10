@@ -51,7 +51,7 @@ contract SynthetixPerpConnector is BaseConnector {
     // ERC20 public constant susd =
     //     ERC20(0xeBaEAAD9236615542844adC5c149F86C36aD1136);
 
-    IDynamicGasFees public constant dynamicGas = IDynamicGasFees(0x05F6f46e5EED6dec1D8Cc3c6e8169D447966844d);
+    IDynamicGasFees public constant dynamicGas = IDynamicGasFees(0xc7BA0f1DE31627Ad655684Cd347260eb7a815e78);
 
     uint256 public constant WAD = 1e18;
 
