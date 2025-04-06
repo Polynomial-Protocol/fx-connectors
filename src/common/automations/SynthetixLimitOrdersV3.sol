@@ -8,7 +8,11 @@ import {AuthUpgradable, Authority} from "../libraries/AuthUpgradable.sol";
 import {ReentrancyGuardUpgradable} from "../libraries/ReentracyUpgradable.sol";
 
 interface IAccount {
-    function cast(string[] calldata _targetNames, bytes[] calldata _datas, address _origin) external;
+    function cast(
+        string[] calldata _targetNames,
+        bytes[] calldata _datas,
+        address _origin
+    ) external;
     function isAuth(address user) external view returns (bool);
 }
 
@@ -22,18 +26,30 @@ interface IPyth {
 
 interface IPythNode {
     function pythAddress() external view returns (IPyth);
-    function fulfillOracleQuery(bytes memory signedOffchainData) external payable;
-    function getLatestPrice(bytes32 priceId, uint256 stalenessTolerance) external view returns (int256);
+    function fulfillOracleQuery(
+        bytes memory signedOffchainData
+    ) external payable;
+    function getLatestPrice(
+        bytes32 priceId,
+        uint256 stalenessTolerance
+    ) external view returns (int256);
 }
 
 interface IPerpMarket {
-    function getOpenPosition(uint128 accountId, uint128 marketId)
+    function getOpenPosition(
+        uint128 accountId,
+        uint128 marketId
+    )
         external
         view
         returns (int256 pnl, int256 accruedFunding, int128 positionSize);
 }
 
-contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuardUpgradable {
+contract SynthetixLimitOrdersV3 is
+    Initializable,
+    AuthUpgradable,
+    ReentrancyGuardUpgradable
+{
     /// -----------------------------------------------------------------------
     /// Library usage
     /// -----------------------------------------------------------------------
@@ -81,14 +97,19 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     }
 
     bytes32 constant EIP712DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        keccak256(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        );
 
     bytes32 constant PRICE_RANGE_TYPEHASH =
-        keccak256("PriceRange(uint256 priceA,uint256 priceB,uint256 acceptablePrice)");
+        keccak256(
+            "PriceRange(uint256 priceA,uint256 priceB,uint256 acceptablePrice)"
+        );
 
-    bytes32 constant ORDER_REQUEST_TYPEHASH = keccak256(
-        "OrderRequest(address user,PriceRange price,PriceRange tpPrice,PriceRange slPrice,uint128 accountId,uint128 marketId,int128 size,uint128 expiry)"
-    );
+    bytes32 constant ORDER_REQUEST_TYPEHASH =
+        keccak256(
+            "OrderRequest(address user,PriceRange price,PriceRange tpPrice,PriceRange slPrice,uint128 accountId,uint128 marketId,int128 size,uint128 expiry)"
+        );
 
     /// -----------------------------------------------------------------------
     /// Storage
@@ -127,7 +148,12 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     mapping(uint128 => bytes32) public priceIds;
 
     /// @notice Initializer
-    function initialize(address _owner, address _list, address _pythNode, address _perpMarket) public initializer {
+    function initialize(
+        address _owner,
+        address _list,
+        address _pythNode,
+        address _perpMarket
+    ) public initializer {
         _auth_init(_owner, Authority(address(0x0)));
         _reentrancy_init();
 
@@ -170,7 +196,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      * @param sig User signed message of the request
      */
-    function executeOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
+    function executeOrder(
+        OrderRequest memory req,
+        bytes memory sig
+    ) external nonReentrant {
         if (!_isPriceValid(req.price)) {
             revert InvalidPriceRange(req.price);
         }
@@ -195,13 +224,25 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         _placeOrder(req, sig);
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(req.marketId, req.price);
+        (bool isValid, uint256 currentPrice) = _isOrderValid(
+            req.marketId,
+            req.price
+        );
 
         if (!isValid) {
-            revert PriceNotInRange(req.price.priceA, req.price.priceB, currentPrice);
+            revert PriceNotInRange(
+                req.price.priceA,
+                req.price.priceB,
+                currentPrice
+            );
         }
 
-        _castSpells(nextOrderId - 1, req, ExecutionType.LIMIT_ORDER, currentPrice);
+        _castSpells(
+            nextOrderId - 1,
+            req,
+            ExecutionType.LIMIT_ORDER,
+            currentPrice
+        );
     }
 
     /**
@@ -231,10 +272,17 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert OrderSizeZero();
         }
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(order.marketId, order.price);
+        (bool isValid, uint256 currentPrice) = _isOrderValid(
+            order.marketId,
+            order.price
+        );
 
         if (!isValid) {
-            revert PriceNotInRange(order.price.priceA, order.price.priceB, currentPrice);
+            revert PriceNotInRange(
+                order.price.priceA,
+                order.price.priceB,
+                currentPrice
+            );
         }
 
         _castSpells(orderId, order, ExecutionType.LIMIT_ORDER, currentPrice);
@@ -245,7 +293,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      * @param sig User signed message of the request
      */
-    function executeTpOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
+    function executeTpOrder(
+        OrderRequest memory req,
+        bytes memory sig
+    ) external nonReentrant {
         if (!_isPriceValid(req.tpPrice)) {
             revert InvalidPriceRange(req.tpPrice);
         }
@@ -274,13 +325,25 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         _placeOrder(req, sig);
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(req.marketId, req.tpPrice);
+        (bool isValid, uint256 currentPrice) = _isOrderValid(
+            req.marketId,
+            req.tpPrice
+        );
 
         if (!isValid) {
-            revert PriceNotInRange(req.tpPrice.priceA, req.tpPrice.priceB, currentPrice);
+            revert PriceNotInRange(
+                req.tpPrice.priceA,
+                req.tpPrice.priceB,
+                currentPrice
+            );
         }
 
-        _castSpells(nextOrderId - 1, req, ExecutionType.TAKE_PROFIT, currentPrice);
+        _castSpells(
+            nextOrderId - 1,
+            req,
+            ExecutionType.TAKE_PROFIT,
+            currentPrice
+        );
     }
 
     /**
@@ -310,10 +373,17 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert InvalidPriceRange(order.tpPrice);
         }
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(order.marketId, order.tpPrice);
+        (bool isValid, uint256 currentPrice) = _isOrderValid(
+            order.marketId,
+            order.tpPrice
+        );
 
         if (!isValid) {
-            revert PriceNotInRange(order.tpPrice.priceA, order.tpPrice.priceB, currentPrice);
+            revert PriceNotInRange(
+                order.tpPrice.priceA,
+                order.tpPrice.priceB,
+                currentPrice
+            );
         }
 
         _castSpells(orderId, order, ExecutionType.TAKE_PROFIT, currentPrice);
@@ -324,7 +394,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      * @param sig User signed message of the request
      */
-    function executeSlOrder(OrderRequest memory req, bytes memory sig) external nonReentrant {
+    function executeSlOrder(
+        OrderRequest memory req,
+        bytes memory sig
+    ) external nonReentrant {
         if (!_isPriceValid(req.slPrice)) {
             revert InvalidPriceRange(req.slPrice);
         }
@@ -353,13 +426,25 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         _placeOrder(req, sig);
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(req.marketId, req.slPrice);
+        (bool isValid, uint256 currentPrice) = _isOrderValid(
+            req.marketId,
+            req.slPrice
+        );
 
         if (!isValid) {
-            revert PriceNotInRange(req.slPrice.priceA, req.slPrice.priceB, currentPrice);
+            revert PriceNotInRange(
+                req.slPrice.priceA,
+                req.slPrice.priceB,
+                currentPrice
+            );
         }
 
-        _castSpells(nextOrderId - 1, req, ExecutionType.STOP_LOSS, currentPrice);
+        _castSpells(
+            nextOrderId - 1,
+            req,
+            ExecutionType.STOP_LOSS,
+            currentPrice
+        );
     }
 
     /**
@@ -389,10 +474,17 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
             revert InvalidPriceRange(order.slPrice);
         }
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(order.marketId, order.slPrice);
+        (bool isValid, uint256 currentPrice) = _isOrderValid(
+            order.marketId,
+            order.slPrice
+        );
 
         if (!isValid) {
-            revert PriceNotInRange(order.slPrice.priceA, order.slPrice.priceB, currentPrice);
+            revert PriceNotInRange(
+                order.slPrice.priceA,
+                order.slPrice.priceB,
+                currentPrice
+            );
         }
 
         _castSpells(orderId, order, ExecutionType.STOP_LOSS, currentPrice);
@@ -445,10 +537,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param data The encoded function data for each of the calls to make to this contract
      * @return results The results from each of the calls passed in via data
      */
-    function multicall(bytes[] calldata data) public payable returns (bytes[] memory results) {
+    function multicall(
+        bytes[] calldata data
+    ) public payable returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
-            (bool success, bytes memory result) = address(this).delegatecall(data[i]);
+            (bool success, bytes memory result) = address(this).delegatecall(
+                data[i]
+            );
 
             if (!success) {
                 // Next 5 lines from https://ethereum.stackexchange.com/a/83577
@@ -467,19 +563,26 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
     /// Admin methods
     /// -----------------------------------------------------------------------
 
-    function updatePriceIds(uint128[] memory _marketIds, bytes32[] memory _priceIds) external requiresAuth {
+    function updatePriceIds(
+        uint128[] memory _marketIds,
+        bytes32[] memory _priceIds
+    ) external requiresAuth {
         if (_marketIds.length != _priceIds.length) {
             revert LengthMismatch();
         }
 
         for (uint256 i = 0; i < _marketIds.length; i++) {
-            emit UpdatePriceId(_marketIds[i], priceIds[_marketIds[i]], _priceIds[i]);
+            emit UpdatePriceId(
+                _marketIds[i],
+                priceIds[_marketIds[i]],
+                _priceIds[i]
+            );
             priceIds[_marketIds[i]] = _priceIds[i];
         }
     }
 
     function sweep() external requiresAuth {
-        (bool success,) = msg.sender.call{value: address(this).balance}("");
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
         require(success);
     }
 
@@ -492,9 +595,12 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      * @param execType Type of order to execute
      */
-    function _castSpells(uint256 orderId, OrderRequest memory req, ExecutionType execType, uint256 currentPrice)
-        internal
-    {
+    function _castSpells(
+        uint256 orderId,
+        OrderRequest memory req,
+        ExecutionType execType,
+        uint256 currentPrice
+    ) internal {
         string[] memory targetNames = new string[](1);
         bytes[] memory datas = new bytes[](1);
 
@@ -509,22 +615,34 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 req.price.acceptablePrice
             );
 
-            status[orderId] = (_isPriceValid(req.tpPrice) || _isPriceValid(req.slPrice))
+            status[orderId] = (_isPriceValid(req.tpPrice) ||
+                _isPriceValid(req.slPrice))
                 ? OrderStatus.EXECUTED
                 : OrderStatus.COMPLETED;
         } else {
-            (,, int128 currentPosition) = perpMarket.getOpenPosition(req.accountId, req.marketId);
+            (, , int128 currentPosition) = perpMarket.getOpenPosition(
+                req.accountId,
+                req.marketId
+            );
 
-            (bool compatible, int128 sizeDelta) = _checkAndGetTpSlDelta(req.size, currentPosition);
+            (bool compatible, int128 sizeDelta) = _checkAndGetTpSlDelta(
+                req.size,
+                currentPosition
+            );
             if (!compatible) {
                 revert PositionChangedDirection(req.size, currentPosition);
             }
 
-            uint256 acceptablePrice =
-                execType == ExecutionType.STOP_LOSS ? req.slPrice.acceptablePrice : req.tpPrice.acceptablePrice;
+            uint256 acceptablePrice = execType == ExecutionType.STOP_LOSS
+                ? req.slPrice.acceptablePrice
+                : req.tpPrice.acceptablePrice;
 
             datas[0] = abi.encodeWithSignature(
-                "commitTrade(uint128,uint128,int128,uint256)", req.accountId, req.marketId, sizeDelta, acceptablePrice
+                "commitTrade(uint128,uint128,int128,uint256)",
+                req.accountId,
+                req.marketId,
+                sizeDelta,
+                acceptablePrice
             );
 
             status[orderId] = OrderStatus.COMPLETED;
@@ -532,7 +650,14 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
 
         IAccount(req.user).cast(targetNames, datas, address(this));
 
-        emit OrderExec(req.user, req.marketId, orderId, execType, currentPrice, 0);
+        emit OrderExec(
+            req.user,
+            req.marketId,
+            orderId,
+            execType,
+            currentPrice,
+            0
+        );
     }
 
     /**
@@ -565,7 +690,10 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param signedOffchainData signed offchain data
      */
     function _updateOracle(bytes memory signedOffchainData) internal {
-        (,,, bytes[] memory updateData) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
+        (, , , bytes[] memory updateData) = abi.decode(
+            signedOffchainData,
+            (uint8, uint64, bytes32[], bytes[])
+        );
 
         IPyth pyth = pythNode.pythAddress();
         uint256 updateFee = pyth.getUpdateFee(updateData);
@@ -582,18 +710,26 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param marketId Market ID
      * @param range Price range
      */
-    function _isOrderValid(uint128 marketId, PriceRange memory range) internal view returns (bool, uint256) {
+    function _isOrderValid(
+        uint128 marketId,
+        PriceRange memory range
+    ) internal view returns (bool, uint256) {
         bytes32 priceId = priceIds[marketId];
         uint256 currentPrice = uint256(pythNode.getLatestPrice(priceId, 0));
 
-        return (currentPrice >= range.priceA && currentPrice <= range.priceB, currentPrice);
+        return (
+            currentPrice >= range.priceA && currentPrice <= range.priceB,
+            currentPrice
+        );
     }
 
     /**
      * @dev Split signature
      * @param _sig Signature that needs to be split into v, r, s
      */
-    function _splitSignature(bytes memory _sig) internal pure returns (uint8, bytes32, bytes32) {
+    function _splitSignature(
+        bytes memory _sig
+    ) internal pure returns (uint8, bytes32, bytes32) {
         require(_sig.length == 65);
 
         bytes32 r;
@@ -617,15 +753,33 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param _req Corresponsding order request
      * @param _sig Signature
      */
-    function _getSigner(OrderRequest memory _req, bytes memory _sig) internal view returns (address) {
+    function _getSigner(
+        OrderRequest memory _req,
+        bytes memory _sig
+    ) internal view returns (address) {
         bytes32 priceHash = keccak256(
-            abi.encode(PRICE_RANGE_TYPEHASH, _req.price.priceA, _req.price.priceB, _req.price.acceptablePrice)
+            abi.encode(
+                PRICE_RANGE_TYPEHASH,
+                _req.price.priceA,
+                _req.price.priceB,
+                _req.price.acceptablePrice
+            )
         );
         bytes32 tpPriceHash = keccak256(
-            abi.encode(PRICE_RANGE_TYPEHASH, _req.tpPrice.priceA, _req.tpPrice.priceB, _req.tpPrice.acceptablePrice)
+            abi.encode(
+                PRICE_RANGE_TYPEHASH,
+                _req.tpPrice.priceA,
+                _req.tpPrice.priceB,
+                _req.tpPrice.acceptablePrice
+            )
         );
         bytes32 slPriceHash = keccak256(
-            abi.encode(PRICE_RANGE_TYPEHASH, _req.slPrice.priceA, _req.slPrice.priceB, _req.slPrice.acceptablePrice)
+            abi.encode(
+                PRICE_RANGE_TYPEHASH,
+                _req.slPrice.priceA,
+                _req.slPrice.priceB,
+                _req.slPrice.acceptablePrice
+            )
         );
         bytes32 reqHash = keccak256(
             abi.encode(
@@ -640,7 +794,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
                 _req.expiry
             )
         );
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, reqHash));
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, reqHash)
+        );
         (uint8 v, bytes32 r, bytes32 s) = _splitSignature(_sig);
         return ecrecover(digest, v, r, s);
     }
@@ -649,7 +805,9 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @notice Returns whether the price range is valid or not
      * @param price price range object
      */
-    function _isPriceValid(PriceRange memory price) internal pure returns (bool) {
+    function _isPriceValid(
+        PriceRange memory price
+    ) internal pure returns (bool) {
         if (price.priceA == 0 || price.priceB == 0) {
             return false;
         }
@@ -661,18 +819,19 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
         return true;
     }
 
-    function _checkAndGetTpSlDelta(int128 requestSize, int128 openPosition)
-        internal
-        pure
-        returns (bool compatible, int128 sizeDelta)
-    {
+    function _checkAndGetTpSlDelta(
+        int128 requestSize,
+        int128 openPosition
+    ) internal pure returns (bool compatible, int128 sizeDelta) {
         if (!_sameSign(requestSize, openPosition)) {
             compatible = false;
             return (compatible, sizeDelta);
         }
 
         compatible = true;
-        sizeDelta = (_signedAbs(requestSize) > _signedAbs(openPosition)) ? -openPosition : -requestSize;
+        sizeDelta = (_signedAbs(requestSize) > _signedAbs(openPosition))
+            ? -openPosition
+            : -requestSize;
     }
 
     function _signedAbs(int128 x) internal pure returns (int128) {
@@ -810,7 +969,11 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param req Order request
      */
     event OrderPlaced(
-        address indexed user, uint128 indexed marketId, uint256 orderId, OrderRequest req, bytes32 digest
+        address indexed user,
+        uint128 indexed marketId,
+        uint256 orderId,
+        OrderRequest req,
+        bytes32 digest
     );
 
     /**
@@ -837,7 +1000,11 @@ contract SynthetixLimitOrdersV3 is Initializable, AuthUpgradable, ReentrancyGuar
      * @param marketId Market ID
      * @param orderId Order ID
      */
-    event OrderCancel(address indexed user, uint128 indexed marketId, uint256 orderId);
+    event OrderCancel(
+        address indexed user,
+        uint128 indexed marketId,
+        uint256 orderId
+    );
 
     /**
      * @notice Emitted when the order is cancelled
