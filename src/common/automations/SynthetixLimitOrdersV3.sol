@@ -49,9 +49,10 @@ contract SynthetixLimitOrdersV3 is
 
     struct OrderRequest {
         address user;
-        PriceRange price;
+        uint128[] marketIds;
+        PriceRange[] priceRanges;
         uint128 accountId;
-        uint128 marketId;
+        uint128 orderMarketId;
         int128 size;
         uint128 expiry;
     }
@@ -125,6 +126,7 @@ contract SynthetixLimitOrdersV3 is
     error OrderExecuted(uint256 orderId);
     error OrderCompleted(uint256 orderId);
     error OrderSizeZero();
+    error LengthMismatch();
 
     /// -----------------------------------------------------------------------
     /// Initializer
@@ -152,18 +154,25 @@ contract SynthetixLimitOrdersV3 is
      * @param req Order request
      */
     function placeOrder(OrderRequest memory req) external onlyScw {
-        uint256 orderId = nextOrderId++;
-        orders[orderId] = req;
-
         if (req.user != msg.sender) {
             revert NotAuthorized(req.user, msg.sender);
         }
 
-        if (!_isPriceValid(req.price)) {
-            status[orderId] = OrderStatus.EXECUTED;
+        if (req.marketIds.length != req.priceRanges.length) {
+            revert LengthMismatch();
         }
 
-        emit OrderPlaced(req.user, req.marketId, orderId, req);
+        for (uint256 i = 0; i < req.priceRanges.length; i++) {
+            if (!_isPriceValid(req.priceRanges[i])) {
+                revert InvalidPriceRange(req.priceRanges[i]);
+            }
+        }
+
+        uint256 orderId = nextOrderId++;
+        orders[orderId] = req;
+        status[orderId] = OrderStatus.SUBMITTED;
+
+        emit OrderPlaced(req.user, req.orderMarketId, orderId, req);
     }
 
     /**
@@ -193,20 +202,23 @@ contract SynthetixLimitOrdersV3 is
             revert OrderSizeZero();
         }
 
-        (bool isValid, uint256 currentPrice) = _isOrderValid(
-            order.marketId,
-            order.price
-        );
-
-        if (!isValid) {
-            revert PriceNotInRange(
-                order.price.priceA,
-                order.price.priceB,
-                currentPrice
+        // Check all price conditions
+        for (uint256 i = 0; i < order.marketIds.length; i++) {
+            (bool isValid, uint256 currentPrice) = _isOrderValid(
+                order.marketIds[i],
+                order.priceRanges[i]
             );
+
+            if (!isValid) {
+                revert PriceNotInRange(
+                    order.priceRanges[i].priceA,
+                    order.priceRanges[i].priceB,
+                    currentPrice
+                );
+            }
         }
 
-        _castSpells(orderId, order, currentPrice);
+        _castSpells(orderId, order);
     }
 
     /**
@@ -222,7 +234,7 @@ contract SynthetixLimitOrdersV3 is
 
         status[orderId] = OrderStatus.CANCELLED;
 
-        emit OrderCancel(order.user, order.marketId, orderId);
+        emit OrderCancel(order.user, order.orderMarketId, orderId);
     }
 
     /// -----------------------------------------------------------------------
@@ -233,13 +245,8 @@ contract SynthetixLimitOrdersV3 is
      * @notice Generate spells to cast
      * @param orderId Order ID
      * @param order Order request
-     * @param currentPrice Current price at execution time
      */
-    function _castSpells(
-        uint256 orderId,
-        OrderRequest memory order,
-        uint256 currentPrice
-    ) internal {
+    function _castSpells(uint256 orderId, OrderRequest memory order) internal {
         string[] memory targetNames = new string[](1);
         bytes[] memory datas = new bytes[](1);
 
@@ -248,16 +255,16 @@ contract SynthetixLimitOrdersV3 is
         datas[0] = abi.encodeWithSignature(
             "commitTrade(uint128,uint128,int128,uint256)",
             order.accountId,
-            order.marketId,
+            order.orderMarketId,
             order.size,
-            order.price.acceptablePrice
+            BigInt(1) // Pass 1n as acceptable price since we're executing in a different market
         );
 
         status[orderId] = OrderStatus.COMPLETED;
 
         IAccount(order.user).cast(targetNames, datas, address(this));
 
-        emit OrderExec(order.user, order.marketId, orderId, currentPrice);
+        emit OrderExec(order.user, order.orderMarketId, orderId, 0);
     }
 
     /**
